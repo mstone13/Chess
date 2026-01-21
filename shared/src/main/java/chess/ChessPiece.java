@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -11,7 +12,12 @@ import java.util.List;
  */
 public class ChessPiece {
 
+    private final ChessGame.TeamColor pieceColor;
+    private final PieceType type;
+
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+        this.pieceColor = pieceColor;
+        this.type = type;
     }
 
     /**
@@ -30,14 +36,14 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        throw new RuntimeException("Not implemented");
+        return pieceColor;
     }
 
     /**
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        throw new RuntimeException("Not implemented");
+        return type;
     }
 
     /**
@@ -48,6 +54,121 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return List.of();
+        ChessPiece piece = board.getPiece(myPosition);
+        PieceType type = piece.getPieceType();
+//        if (type == PieceType.ROOK){
+        return new RookMovesCalculator().pieceMoves(board, myPosition);
+
+    }
+
+    public interface PieceMovesCalculator{
+        Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position);
+    }
+
+}
+
+class RookMovesCalculator implements ChessPiece.PieceMovesCalculator {
+    @Override
+    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position){
+        ChessPiece piece = board.getPiece(position);
+        ChessPosition startPos = position;
+        List<ChessPosition> validMoves = new ArrayList<>();
+
+        int row = position.getRow();
+        int tempRow = row;
+        int col = position.getColumn();
+        int tempCol = col;
+
+        while (tempRow < 8) {
+            tempRow++;
+            ChessPosition tempPosition = new ChessPosition(tempRow, col);
+            if (board.getPiece(tempPosition) == null) {
+                validMoves.add(tempPosition);
+            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
+                validMoves.add(tempPosition);
+                break;
+            } else {
+                break;
+            }
+        }
+        tempRow = row;
+        while (tempRow > 1) {
+            tempRow--;
+            ChessPosition tempPosition = new ChessPosition(tempRow, col);
+            if (board.getPiece(tempPosition) == null) {
+                validMoves.add(tempPosition);
+            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
+                validMoves.add(tempPosition);
+                break;
+            } else {
+                break;
+            }
+        }
+        while (tempCol < 8) {
+            tempCol++;
+            ChessPosition tempPosition = new ChessPosition(row, tempCol);
+            if (board.getPiece(tempPosition) == null) {
+                validMoves.add(tempPosition);
+            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
+                validMoves.add(tempPosition);
+                break;
+            } else {
+                break;
+            }
+        }
+        tempCol = col;
+        while (tempCol > 1) {
+            tempCol--;
+            ChessPosition tempPosition = new ChessPosition(row, tempCol);
+            if (board.getPiece(tempPosition) == null) {
+                validMoves.add(tempPosition);
+            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
+                validMoves.add(tempPosition);
+                break;
+            } else {
+                break;
+            }
+        }
+        Collection<ChessMove> finalList = new ArrayList<>();
+        for (ChessPosition validMove : validMoves) {
+            ChessMove move = new ChessMove(startPos, validMove, null);
+            finalList.add(move);
+        }
+        return finalList;
     }
 }
+
+//public class BishopMovesCalculator implements ChessPiece.PieceMovesCalculator {
+//    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position){
+//        ChessPiece piece = board.getPiece(position);
+//        ChessPosition startPos = position;
+//        List<ChessPosition> validMoves = new ArrayList<>();
+//
+//        int row = position.getRow();
+//        int tempRow = row;
+//        int col = position.getColumn();
+//        int tempCol = col;
+//
+//        while (tempRow < 8 && tempCol < 8) {
+//            tempRow++;
+//            tempCol++;
+//            ChessPosition tempPosition = new ChessPosition(row, col);
+//            if (board.getPiece(tempPosition) == null) {
+//                validMoves.add(tempPosition);
+//            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
+//                validMoves.add(tempPosition);
+//                break;
+//            } else {
+//                break;
+//            }
+//        }
+//
+//
+//        Collection<ChessMove> finalList = new ArrayList<>();
+//        for (ChessPosition validMove : validMoves) {
+//            ChessMove move = new ChessMove(startPos, validMove, null);
+//            finalList.add(move);
+//        }
+//        return finalList;
+//    }
+//}
