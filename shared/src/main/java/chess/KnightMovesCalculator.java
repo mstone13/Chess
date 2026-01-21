@@ -24,12 +24,12 @@ public class KnightMovesCalculator implements ChessPiece.PieceMovesCalculator{
 
 
         for (int[] move : possibleMoves) {
-            int tempRow = row;
-            int tempCol = col;
+//            int tempRow = row;
+//            int tempCol = col;
             int addRow = move[0];
             int addCol = move[1];
-            ChessPosition tempPosition = new ChessPosition(tempRow + addRow, tempCol + addCol);
-            if (tempRow + addRow < 1 || tempRow + addRow > 8 || tempCol + addCol < 1 || tempCol + addCol > 8){
+            ChessPosition tempPosition = new ChessPosition(row + addRow, col + addCol);
+            if (row + addRow < 1 || row + addRow > 8 || col + addCol < 1 || col + addCol > 8){
                 continue;
             }
             else if (board.getPiece(tempPosition) == null) {
