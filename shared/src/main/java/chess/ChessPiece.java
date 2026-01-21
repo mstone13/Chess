@@ -3,6 +3,7 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a single chess piece
@@ -18,6 +19,20 @@ public class ChessPiece {
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
         this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessPiece that = (ChessPiece) o;
+        return pieceColor == that.pieceColor && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceColor, type);
     }
 
     /**
@@ -68,10 +83,9 @@ public class ChessPiece {
 }
 
 class RookMovesCalculator implements ChessPiece.PieceMovesCalculator {
-    @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position){
         ChessPiece piece = board.getPiece(position);
-        ChessPosition startPos = position;
+
         List<ChessPosition> validMoves = new ArrayList<>();
 
         int row = position.getRow();
@@ -131,44 +145,10 @@ class RookMovesCalculator implements ChessPiece.PieceMovesCalculator {
         }
         Collection<ChessMove> finalList = new ArrayList<>();
         for (ChessPosition validMove : validMoves) {
-            ChessMove move = new ChessMove(startPos, validMove, null);
+            ChessMove move = new ChessMove(position, validMove, null);
             finalList.add(move);
         }
         return finalList;
     }
 }
 
-//public class BishopMovesCalculator implements ChessPiece.PieceMovesCalculator {
-//    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position){
-//        ChessPiece piece = board.getPiece(position);
-//        ChessPosition startPos = position;
-//        List<ChessPosition> validMoves = new ArrayList<>();
-//
-//        int row = position.getRow();
-//        int tempRow = row;
-//        int col = position.getColumn();
-//        int tempCol = col;
-//
-//        while (tempRow < 8 && tempCol < 8) {
-//            tempRow++;
-//            tempCol++;
-//            ChessPosition tempPosition = new ChessPosition(row, col);
-//            if (board.getPiece(tempPosition) == null) {
-//                validMoves.add(tempPosition);
-//            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
-//                validMoves.add(tempPosition);
-//                break;
-//            } else {
-//                break;
-//            }
-//        }
-//
-//
-//        Collection<ChessMove> finalList = new ArrayList<>();
-//        for (ChessPosition validMove : validMoves) {
-//            ChessMove move = new ChessMove(startPos, validMove, null);
-//            finalList.add(move);
-//        }
-//        return finalList;
-//    }
-//}
