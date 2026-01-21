@@ -72,7 +72,7 @@ public class ChessPiece {
         ChessPiece piece = board.getPiece(myPosition);
         PieceType type = piece.getPieceType();
 //        if (type == PieceType.ROOK){
-        return new KingMovesCalculator().pieceMoves(board, myPosition);
+        return new KnightMovesCalculator().pieceMoves(board, myPosition);
     }
 
     public interface PieceMovesCalculator{
