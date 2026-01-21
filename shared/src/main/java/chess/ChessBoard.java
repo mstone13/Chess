@@ -7,7 +7,8 @@ package chess;
  * signature of the existing methods.
  */
 public class ChessBoard {
-
+    //create an array (matrix)
+    ChessPiece[][] squares = new ChessPiece[8][8];
     public ChessBoard() {
         
     }
@@ -19,9 +20,9 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        throw new RuntimeException("Not implemented");
+        squares[position.getRow()-1][position.getColumn()-1] = piece;
     }
-
+    //add a piece to a certain position on the matrix
     /**
      * Gets a chess piece on the chessboard
      *
@@ -30,9 +31,9 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        throw new RuntimeException("Not implemented");
+        return squares[position.getRow()-1][position.getColumn()-1];
     }
-
+    //look in the matrix, return the piece in that position if there is one
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)
@@ -40,4 +41,5 @@ public class ChessBoard {
     public void resetBoard() {
         throw new RuntimeException("Not implemented");
     }
+    //send pieces to their designated starting positions
 }
