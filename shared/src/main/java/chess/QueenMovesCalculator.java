@@ -26,10 +26,14 @@ public class QueenMovesCalculator implements ChessPiece.PieceMovesCalculator {
         for (int[] move : possibleMoves) {
             int tempRow = row;
             int tempCol = col;
-            while (tempRow < 8 && tempRow > 1 && tempCol < 8 && tempCol > 1) {
+            while (tempRow < 8 && tempRow > 0 && tempCol < 8 && tempCol > 0) {
                 tempRow += move[0];
                 tempCol += move[1];
+                if (tempRow <= 0 || tempCol <= 0 || tempRow > 8 || tempCol > 8) {
+                    break;
+                }
                 ChessPosition tempPosition = new ChessPosition(tempRow, tempCol);
+
                 if (board.getPiece(tempPosition) == null) {
                     validMoves.add(tempPosition);
                 } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
