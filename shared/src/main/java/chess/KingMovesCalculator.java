@@ -23,8 +23,6 @@ public class KingMovesCalculator implements ChessPiece.PieceMovesCalculator {
         possibleMoves.add(new int[] {1, 0});
 
         for (int[] move : possibleMoves) {
-//            int tempRow = row;
-//            int tempCol = col;
             int addRow = move[0];
             int addCol = move[1];
             ChessPosition tempPosition = new ChessPosition(row + addRow, col + addCol);

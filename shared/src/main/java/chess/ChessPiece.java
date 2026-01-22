@@ -71,8 +71,19 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         ChessPiece piece = board.getPiece(myPosition);
         PieceType type = piece.getPieceType();
-//        if (type == PieceType.ROOK){
-        return new KnightMovesCalculator().pieceMoves(board, myPosition);
+
+        PieceMovesCalculator calc;
+        switch(type) {
+            case QUEEN -> calc = new QueenMovesCalculator();
+            case KING -> calc = new KingMovesCalculator();
+            case ROOK -> calc = new RookMovesCalculator();
+            case BISHOP -> calc = new BishopMovesCalculator();
+            case KNIGHT -> calc = new KnightMovesCalculator();
+            case PAWN -> calc = new PawnMovesCalculator();
+            default -> throw new IllegalStateException("Unexpected Piece Type");
+        }
+
+        return calc.pieceMoves(board, myPosition);
     }
 
     public interface PieceMovesCalculator{
