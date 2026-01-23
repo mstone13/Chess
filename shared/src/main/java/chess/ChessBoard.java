@@ -59,13 +59,14 @@ public class ChessBoard {
      */
     public void resetBoard() {
         //reset board to null
-        for (int row = 1; row < 8; row++){
-            for (int col = 1; col < 8; col++) {
+        for (int row = 1; row < 9; row++){
+            for (int col = 1; col < 9; col++) {
                 ChessPosition squarePosition = new ChessPosition(row, col);
                 addPiece(squarePosition, null);
             }
         }
-        for (int pawnCol = 1; pawnCol < 8; pawnCol ++){
+
+        for (int pawnCol = 1; pawnCol < 9; pawnCol ++){
             int whiteRow = 2;
             int blackRow = 7;
             //add white pawns to entire row
@@ -90,11 +91,12 @@ public class ChessBoard {
         pieceTypes.add(ChessPiece.PieceType.ROOK);
 
         int col = 1;
-        for (ChessPiece.PieceType type : pieceTypes){
+        for (ChessPiece.PieceType type : pieceTypes) {
             //add white pieces to entire row
             ChessPiece whitePiece = new ChessPiece(ChessGame.TeamColor.WHITE, type);
             ChessPosition whitePiecePos = new ChessPosition(1, col);
             addPiece(whitePiecePos, whitePiece);
+
 
             //add black pieces to entire row
             ChessPiece blackPiece = new ChessPiece(ChessGame.TeamColor.BLACK, type);
