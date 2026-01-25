@@ -18,14 +18,15 @@ public class PawnMovesCalculator implements ChessPiece.PieceMovesCalculator {
             ChessPosition tempPositionForward = new ChessPosition(row + 1, col);
             if (board.getPiece(tempPositionForward) == null) {
                 validMoves.add(tempPositionForward);
-            }
-
-            if (row == 2) {
-                ChessPosition tempPositionDouble = new ChessPosition(row + 2, col);
-                if (board.getPiece(tempPositionDouble) == null && board.getPiece(tempPositionForward) == null) {
-                    validMoves.add(tempPositionDouble);
+                if (row == 2) {
+                    ChessPosition tempPositionDouble = new ChessPosition(row + 2, col);
+                    if (board.getPiece(tempPositionDouble) == null && board.getPiece(tempPositionForward) == null) {
+                        validMoves.add(tempPositionDouble);
+                    }
                 }
             }
+
+
 
             if (col < 9 && col + 1 < 9) {
                 ChessPosition tempPositionRightDiag = new ChessPosition(row + 1, col + 1);
@@ -52,14 +53,15 @@ public class PawnMovesCalculator implements ChessPiece.PieceMovesCalculator {
             ChessPosition tempPositionForward = new ChessPosition(row - 1, col);
             if (board.getPiece(tempPositionForward) == null) {
                 validMoves.add(tempPositionForward);
-            }
-
-            if (row == 7) {
-                ChessPosition tempPositionDouble = new ChessPosition(row - 2, col);
-                if (board.getPiece(tempPositionDouble) == null && board.getPiece(tempPositionForward) == null) {
-                    validMoves.add(tempPositionDouble);
+                if (row == 7) {
+                    ChessPosition tempPositionDouble = new ChessPosition(row - 2, col);
+                    if (board.getPiece(tempPositionDouble) == null && board.getPiece(tempPositionForward) == null) {
+                        validMoves.add(tempPositionDouble);
+                    }
                 }
             }
+
+
 
             if (col < 9 && col + 1 < 9) {
                 ChessPosition tempPositionRightDiag = new ChessPosition(row - 1, col + 1);

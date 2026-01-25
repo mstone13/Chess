@@ -59,14 +59,14 @@ public class ChessBoard {
      */
     public void resetBoard() {
         //reset board to null
-        for (int row = 1; row < 9; row++){
+        for (int row = 1; row < 9; row++) {
             for (int col = 1; col < 9; col++) {
                 ChessPosition squarePosition = new ChessPosition(row, col);
                 addPiece(squarePosition, null);
             }
         }
 
-        for (int pawnCol = 1; pawnCol < 9; pawnCol ++){
+        for (int pawnCol = 1; pawnCol < 9; pawnCol++) {
             int whiteRow = 2;
             int blackRow = 7;
             //add white pawns to entire row
@@ -105,5 +105,4 @@ public class ChessBoard {
             col++;
         }
     }
-    //send pieces to their designated starting positions
 }
