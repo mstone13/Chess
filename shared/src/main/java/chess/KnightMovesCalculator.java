@@ -4,40 +4,37 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class KnightMovesCalculator implements ChessPiece.PieceMovesCalculator{
+public class KnightMovesCalculator implements ChessPiece.PieceMovesCalculator {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position) {
         ChessPiece piece = board.getPiece(position);
         List<ChessPosition> validMoves = new ArrayList<>();
 
-        int row = position.getRow();
+        List<int[]> possibleMoves = new ArrayList<>();
+        possibleMoves.add(new int[] {1,2});
+        possibleMoves.add(new int[] {1,-2});
+        possibleMoves.add(new int[] {2,1});
+        possibleMoves.add(new int[] {2,-1});
+        possibleMoves.add(new int[] {-1,2});
+        possibleMoves.add(new int[] {-1,-2});
+        possibleMoves.add(new int[] {-2,1});
+        possibleMoves.add(new int[] {-2,-1});
+
+        int row = position.getRow();;
         int col = position.getColumn();
 
-        List<int[]> possibleMoves = new ArrayList<>();
-        possibleMoves.add(new int[] {2, 1});
-        possibleMoves.add(new int[] {2, -1});
-        possibleMoves.add(new int[] {1, 2});
-        possibleMoves.add(new int[] {1, -2});
-        possibleMoves.add(new int[] {-2, 1});
-        possibleMoves.add(new int[] {-2, -1});
-        possibleMoves.add(new int[] {-1, 2});
-        possibleMoves.add(new int[] {-1, -2});
-
-
         for (int[] move : possibleMoves) {
-//            int tempRow = row;
-//            int tempCol = col;
-            int addRow = move[0];
-            int addCol = move[1];
-            ChessPosition tempPosition = new ChessPosition(row + addRow, col + addCol);
-            if (row + addRow < 1 || row + addRow > 8 || col + addCol < 1 || col + addCol > 8){
-                continue;
-            }
-            else if (board.getPiece(tempPosition) == null) {
-                validMoves.add(tempPosition);
-            } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()) {
-                validMoves.add(tempPosition);
+            int tempRow = row + move[0];
+            int tempCol = col + move[1];
+            if (tempRow > 0 && tempRow < 9 && tempCol > 0 && tempCol < 9) {
+                ChessPosition tempPosition = new ChessPosition(tempRow, tempCol);
+                if (board.getPiece(tempPosition) == null) {
+                    validMoves.add(tempPosition);
+                } else if (board.getPiece(tempPosition).getTeamColor() != piece.getTeamColor()){
+                    validMoves.add(tempPosition);
+                }
             }
         }
+
         Collection<ChessMove> finalList = new ArrayList<>();
         for (ChessPosition validMove : validMoves) {
             ChessMove move = new ChessMove(position, validMove, null);
