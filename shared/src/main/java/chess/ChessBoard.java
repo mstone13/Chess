@@ -105,4 +105,11 @@ public class ChessBoard {
             col++;
         }
     }
+
+    public ChessBoard(ChessBoard other) {
+        squares = new ChessPiece[8][8];
+        for (int i = 0; i < 8; i++) {
+            System.arraycopy(other.squares[i], 0, squares[i], 0, 8);
+        }
+    }
 }

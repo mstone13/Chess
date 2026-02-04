@@ -1,7 +1,11 @@
 package chess;
 
+import org.junit.jupiter.api.Test;
+
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -64,8 +68,27 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        Collection<ChessMove> legalMoves = new ArrayList<>();
+        ChessBoard myBoard = getBoard();
+        ChessPiece piece = myBoard.getPiece(startPosition);
 
+        Collection<ChessMove> legalMoves = new ArrayList<>();
+        if (piece == null) {
+            return legalMoves;
+        } else {
+            Collection<ChessMove> possibleMoves = piece.pieceMoves(myBoard, startPosition);
+            if (isInCheck(piece.getTeamColor())) {
+                //better get out of check nerd
+            } else {
+                for (ChessMove move : possibleMoves) {
+                    //deep copy board
+                    ChessBoard boardCopy = new ChessBoard(myBoard);
+
+                    //check each move in possibleMoves on the copy board, if legal, add to legalMoves
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -85,7 +108,27 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        ChessBoard myBoard = getBoard();
+        ChessBoard boardCopy = new ChessBoard(myBoard);
+
+        TeamColor attackColor = TeamColor.WHITE;
+        if (teamColor == TeamColor.WHITE) {
+            attackColor = TeamColor.BLACK;
+        }
+
+        for (int row = 0; row < 8; row++){
+            for (int col = 0; col < 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = boardCopy.getPiece(position);
+                if (piece.getTeamColor() == attackColor) {
+                   Collection<ChessMove> possibleMoves = piece.pieceMoves(boardCopy, position);
+                   for (ChessMove move : possibleMoves) {
+                       return boardCopy.getPiece(move.getEndPosition()).getPieceType() == ChessPiece.PieceType.KING;
+                   }
+                }
+            }
+        }
+        return false;
     }
 
     /**
