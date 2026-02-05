@@ -108,8 +108,53 @@ public class ChessBoard {
 
     public ChessBoard(ChessBoard other) {
         squares = new ChessPiece[8][8];
-        for (int i = 0; i < 8; i++) {
-            System.arraycopy(other.squares[i], 0, squares[i], 0, 8);
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                ChessPiece piece = other.squares[row][col];
+
+                if (piece != null) {
+                    squares[row][col] =
+                            new ChessPiece(piece.getTeamColor(),
+                                    piece.getPieceType());
+                }
+            }
         }
     }
+
+    @Override
+    public String toString() {
+        String result = "";
+
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                result += "|";
+
+                ChessPiece piece = getPiece(new ChessPosition(row, col));
+
+                if (piece == null) {
+                    result += " ";
+                } else {
+                    String symbol = switch (piece.getPieceType()) {
+                        case KING -> "K";
+                        case QUEEN -> "Q";
+                        case ROOK -> "R";
+                        case BISHOP -> "B";
+                        case KNIGHT -> "N";
+                        case PAWN -> "P";
+                    };
+
+                    if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                        symbol = symbol.toLowerCase();
+                    }
+
+                    result += symbol;
+                }
+            }
+            result += "|\n";
+        }
+
+        return result;
+    }
+
 }
