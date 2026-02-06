@@ -1,8 +1,5 @@
 package chess;
 
-import org.junit.jupiter.api.Test;
-
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,6 +45,20 @@ public class ChessGame {
         BLACK
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame chessGame = (ChessGame) o;
+        return teamTurn == chessGame.teamTurn && Objects.equals(board, chessGame.board);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(teamTurn, board);
+    }
+
     /**
      * Gets a valid moves for a piece at the given location
      *
@@ -90,11 +101,10 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-
         ChessPosition startPos = move.getStartPosition();
         ChessPiece piece = board.getPiece(startPos);
-        if (piece != null) {
-            if (piece.getTeamColor() == teamTurn) {
+        if (piece != null && piece.getTeamColor() == teamTurn) {
+
                 Collection<ChessMove> legalMoves = validMoves(startPos);
                 if (legalMoves.contains(move)) {
                     ChessPosition endPos = move.getEndPosition();
@@ -102,36 +112,41 @@ public class ChessGame {
                     board.addPiece(endPos, piece);
                     board.addPiece(startPos, null);
 
-                    if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-                        if (endPos.getRow() == 8 && piece.getTeamColor() == TeamColor.WHITE || endPos.getRow() == 1 && piece.getTeamColor() == TeamColor.BLACK) {
+                    boolean whitePromotion = (endPos.getRow() == 8 && piece.getTeamColor() == TeamColor.WHITE);
+                    boolean blackPromotion = (endPos.getRow() == 1 && piece.getTeamColor() == TeamColor.BLACK);
+                    boolean pieceTypePawn = (piece.getPieceType() == ChessPiece.PieceType.PAWN);
+
+                    if (pieceTypePawn && whitePromotion || pieceTypePawn && blackPromotion) {
                             ChessPiece.PieceType promotionType = move.getPromotionPiece();
                             ChessPiece promotedPiece = new ChessPiece(piece.getTeamColor(), promotionType);
                             board.addPiece(endPos, promotedPiece);
-                        }
                     }
 
-                    if (teamTurn == TeamColor.WHITE) {
-                        teamTurn = TeamColor.BLACK;
-                    } else {
-                        teamTurn = TeamColor.WHITE;
-                    }
+                    teamTurn = changeTeamTurn(piece.getTeamColor());
+
                 } else {
                     throw new InvalidMoveException("Illegal Move");
                 }
-            } else {
-                throw new InvalidMoveException("Wrong team: " + teamTurn);
-            }
-        } else {
-            throw new InvalidMoveException("Null type.");
+        } else if (piece == null || piece.getTeamColor() != teamTurn) {
+            throw new InvalidMoveException("Null piece or wrong team turn");
         }
     }
 
+    public TeamColor changeTeamTurn (TeamColor teamTurn) {
+        if (teamTurn == TeamColor.WHITE) {
+            teamTurn = TeamColor.BLACK;
+        } else {
+            teamTurn = TeamColor.WHITE;
+        }
+        return teamTurn;
+    }
     /**
      * Determines if the given team is in check
      *
      * @param teamColor which team to check for check
      * @return True if the specified team is in check
      */
+
     public boolean isInCheck(TeamColor teamColor) {
        return isInCheckHelper(board, teamColor);
     }
@@ -222,6 +237,7 @@ public class ChessGame {
 
             for (int row = 1; row < 9; row++) {
                 for (int col = 1; col < 9; col++) {
+
                     ChessPosition position = new ChessPosition(row, col);
                     ChessPiece piece = board.getPiece(position);
                     if (piece != null && piece.getTeamColor() == teamColor) {
@@ -245,6 +261,10 @@ public class ChessGame {
         return false;
     }
 
+
+//    public Collection<ChessMove> getPieceMoves (int row, int col) {
+//
+//    }
     /**
      * Sets this game's chessboard with a given board
      *
@@ -264,3 +284,10 @@ public class ChessGame {
     }
 
 }
+
+
+//OTHER OPTIMIZATION AND STYLE CHANGES:
+//--COMBINE 'ADD PIECE' ALL INTO ONE FUNCTION
+//--SIMPLIFY OTHER LARGE NESTS
+//--POSSIBLY COMBINE CODE FROM ROOK/BISHOP/QUEEN CLASSES
+//--SIMPLIFY PAWNMOVESCALCULATOR

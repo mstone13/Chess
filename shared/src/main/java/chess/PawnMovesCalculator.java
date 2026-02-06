@@ -18,11 +18,9 @@ public class PawnMovesCalculator implements ChessPiece.PieceMovesCalculator {
                 ChessPosition tempForwardOnePos = new ChessPosition(forwardOne, col);
                 if (board.getPiece(tempForwardOnePos) == null) {
                     validMoves.add(tempForwardOnePos);
-                    if (row == 2) {
-                        ChessPosition tempForwardTwoPos = new ChessPosition(row + 2, col);
-                        if (board.getPiece(tempForwardTwoPos) == null) {
-                            validMoves.add(tempForwardTwoPos);
-                        }
+                    ChessPosition tempForwardTwoPos = new ChessPosition(row + 2, col);
+                    if (row == 2 && board.getPiece(tempForwardTwoPos) == null) {
+                        validMoves.add(tempForwardTwoPos);
                     }
                 }
             }
@@ -84,7 +82,9 @@ public class PawnMovesCalculator implements ChessPiece.PieceMovesCalculator {
 
         Collection<ChessMove> finalList = new ArrayList<>();
         for (ChessPosition validMove : validMoves) {
-            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE && validMove.getRow() == 8 || piece.getTeamColor() == ChessGame.TeamColor.BLACK && validMove.getRow() == 1){
+            boolean whitePromotion = (piece.getTeamColor() == ChessGame.TeamColor.WHITE && validMove.getRow() == 8);
+            boolean blackPromotion = (piece.getTeamColor() == ChessGame.TeamColor.BLACK && validMove.getRow() == 1);
+            if (whitePromotion || blackPromotion){
                 for (ChessPiece.PieceType type : pieceTypes) {
                     ChessMove move = new ChessMove(position, validMove, type);
                     finalList.add(move);
