@@ -26,10 +26,10 @@ public class QueenMovesCalculator implements ChessPiece.PieceMovesCalculator {
         for (int[] move : possibleMoves) {
             int tempRow = row;
             int tempCol = col;
-            while (tempRow < 8 && tempRow > 0 && tempCol < 8 && tempCol > 0) {
+            while (tempRow > 0 && tempRow < 9 && tempCol > 0 && tempCol < 9) {
                 tempRow += move[0];
                 tempCol += move[1];
-                if (tempRow <= 0 || tempCol <= 0 || tempRow > 8 || tempCol > 8) {
+                if (tempRow <= 0 || tempRow >= 9 || tempCol <= 0 || tempCol >= 9) {
                     break;
                 }
                 ChessPosition tempPosition = new ChessPosition(tempRow, tempCol);

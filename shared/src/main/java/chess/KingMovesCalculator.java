@@ -27,7 +27,7 @@ public class KingMovesCalculator implements ChessPiece.PieceMovesCalculator {
             int addCol = move[1];
             ChessPosition tempPosition = new ChessPosition(row + addRow, col + addCol);
             if (row + addRow < 1 || row + addRow > 8 || col + addCol < 1 || col + addCol > 8){
-                break;
+                continue;
             }
             else if (board.getPiece(tempPosition) == null) {
                 validMoves.add(tempPosition);

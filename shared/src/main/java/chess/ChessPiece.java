@@ -85,6 +85,11 @@ public class ChessPiece {
         Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position);
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s", type);
+    }
+
 }
 
 

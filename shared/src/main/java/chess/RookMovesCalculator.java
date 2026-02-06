@@ -21,7 +21,7 @@ class RookMovesCalculator implements ChessPiece.PieceMovesCalculator {
         for (int[] move : possibleMoves) {
             int tempRow = row;
             int tempCol = col;
-            while (tempRow < 8 && tempRow >= 1 && tempCol < 8 && tempCol >= 1) {
+            while (tempRow <= 8 && tempRow >= 1 && tempCol <= 8 && tempCol >= 1) {
                 tempRow += move[0];
                 tempCol += move[1];
                 if (tempRow < 1 || tempRow > 8 || tempCol < 1 || tempCol > 8) {

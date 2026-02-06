@@ -22,10 +22,10 @@ public class BishopMovesCalculator implements ChessPiece.PieceMovesCalculator {
         for (int[] move : possibleMoves) {
             int tempRow = row;
             int tempCol = col;
-            while (tempRow > 1 && tempRow < 8 && tempCol > 1 && tempCol < 8) {
+            while (tempRow > 0 && tempRow < 9 && tempCol > 0 && tempCol < 9) {
                 tempRow += move[0];
                 tempCol += move[1];
-                if (tempRow < 1 || tempRow > 8 || tempCol < 1 || tempCol > 8) {
+                if (tempRow <= 0 || tempRow >= 9 || tempCol <= 0 || tempCol >= 9) {
                     break;
                 } else {
                     ChessPosition tempPosition = new ChessPosition(tempRow, tempCol);
