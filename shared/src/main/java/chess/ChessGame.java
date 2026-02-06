@@ -191,22 +191,31 @@ public class ChessGame {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
                 if (piece != null && piece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> moves = piece.pieceMoves(board, position);
-                    for (ChessMove move : moves) {
-                        ChessBoard copyBoard = new ChessBoard(board);
-                        ChessPosition startPos = move.getStartPosition();
-                        ChessPosition endPos = move.getEndPosition();
-
-                        copyBoard.addPiece(endPos, piece);
-                        copyBoard.addPiece(startPos, null);
-                        if (!isInCheckHelper(copyBoard, teamColor)) {
-                            return false;
-                        }
+                    if (simulateMoves(piece, position)) {
+                        return false;
                     }
                 }
             }
         }
         return true;
+    }
+
+    public boolean simulateMoves (ChessPiece piece, ChessPosition position) {
+        Collection<ChessMove> moves = piece.pieceMoves(board, position);
+
+        for (ChessMove move : moves) {
+            ChessBoard copyBoard = new ChessBoard(board);
+            ChessPosition startPos = move.getStartPosition();
+            ChessPosition endPos = move.getEndPosition();
+
+            copyBoard.addPiece(endPos, piece);
+            copyBoard.addPiece(startPos, null);
+
+            if (!isInCheckHelper(copyBoard, piece.getTeamColor())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public ChessPosition getKingPosition(ChessBoard copyBoard, TeamColor teamColor) {
@@ -241,18 +250,8 @@ public class ChessGame {
                     ChessPosition position = new ChessPosition(row, col);
                     ChessPiece piece = board.getPiece(position);
                     if (piece != null && piece.getTeamColor() == teamColor) {
-                        Collection<ChessMove> pieceMoves = piece.pieceMoves(board, position);
-                        for (ChessMove move : pieceMoves) {
-                            ChessBoard copyBoard = new ChessBoard(board);
-                            ChessPosition startPos = move.getStartPosition();
-                            ChessPosition endPos = move.getEndPosition();
-
-                            copyBoard.addPiece(endPos, piece);
-                            copyBoard.addPiece(startPos, null);
-                            if (!isInCheckHelper(copyBoard, teamColor)) {
-                                outOfCheckMoves.add(move);
-                            }
-                        }
+                        List<ChessMove> outOfStalemateMoves = stalemateHelper(position, piece);
+                        outOfCheckMoves.addAll(outOfStalemateMoves);
                     }
                 }
             }
@@ -260,6 +259,25 @@ public class ChessGame {
         }
         return false;
     }
+
+    public List<ChessMove> stalemateHelper(ChessPosition position, ChessPiece piece) {
+        List<ChessMove> outOfStalemate = new ArrayList<>();
+
+        Collection<ChessMove> pieceMoves = piece.pieceMoves(board, position);
+        for (ChessMove move : pieceMoves) {
+            ChessBoard copyBoard = new ChessBoard(board);
+            ChessPosition startPos = move.getStartPosition();
+            ChessPosition endPos = move.getEndPosition();
+
+            copyBoard.addPiece(endPos, piece);
+            copyBoard.addPiece(startPos, null);
+            if (!isInCheckHelper(copyBoard, piece.getTeamColor())) {
+                outOfStalemate.add(move);
+            }
+        }
+        return outOfStalemate;
+    }
+
 
 
 //    public Collection<ChessMove> getPieceMoves (int row, int col) {

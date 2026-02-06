@@ -13,6 +13,8 @@ public class PawnMovesCalculator implements ChessPiece.PieceMovesCalculator {
         int col = position.getColumn();
 
         if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+//            List<ChessPosition> legalWhiteMoves = whiteMovesCalculator(board, row, col);
+//            validMoves.addAll(legalWhiteMoves);
             int forwardOne = row + 1;
             if (forwardOne < 9) {
                 ChessPosition tempForwardOnePos = new ChessPosition(forwardOne, col);
@@ -96,4 +98,70 @@ public class PawnMovesCalculator implements ChessPiece.PieceMovesCalculator {
         }
         return finalList;
     }
+
+//    public List<ChessPosition> whiteMovesCalculator(ChessBoard board, int row, int col) {
+//        //forward one
+//        //forward two
+//        //left diagonal kill
+//        //right diagonal kill
+//        List<ChessPosition> whiteMoves = new ArrayList<>();
+//
+//        List<int[]> possibleForwardMoves = new ArrayList<>(List.of(new int[] {1, 0}, new int[] {2, 0}));
+//        List<int[]> possibleKillMoves = new ArrayList<>(List.of(new int[] {1, 1}, new int[]{1, -1}));
+//
+//        ChessPosition initialPosition = new ChessPosition(row, col);
+//        ChessPiece initialPiece = board.getPiece(initialPosition);
+//
+//        for (int [] move : possibleForwardMoves) {
+//            row = move[0];
+//            col = move[1];
+//            if (checkMove(board, row, col)) {
+//                ChessPosition forwardOnePos = new ChessPosition(row, col);
+//                whiteMoves.add(forwardOnePos);
+//            }
+//        }
+//
+//        for (int [] move : possibleKillMoves) {
+//            row = move[0];
+//            col = move[1];
+//            if (checkKillMove(board, row, col, initialPiece)) {
+//                ChessPosition forwardOnePos = new ChessPosition(row, col);
+//                whiteMoves.add(forwardOnePos);
+//            }
+//        }
+//
+//        return whiteMoves;
+//    }
+//
+//    public boolean checkMove(ChessBoard board, int row, int col) {
+//        boolean canMove = false;
+//        if (row < 9 && row > 0) {
+//            ChessPosition tempPosition = new ChessPosition(row, col);
+//            if (board.getPiece(tempPosition) == null) {
+//                canMove = true;
+//            }
+//        }
+//        return canMove;
+//    }
+//
+//    public boolean checkKillMove(ChessBoard board, int row, int col, ChessPiece initialPiece) {
+//        boolean canMove = false;
+//        if (row < 9 && col < 9 && row > 0 && col > 0) {
+//            ChessPosition tempPosition = new ChessPosition(row, col);
+//            boolean notSameTeam = board.getPiece(tempPosition).getTeamColor() != initialPiece.getTeamColor();
+//            if (board.getPiece(tempPosition) != null && notSameTeam) {
+//                canMove = true;
+//            }
+//        }
+//        return canMove;
+//    }
+
+//    int diagRightCol = col + 1;
+//            if (forwardOne < 9 && diagRightCol < 9) {
+//                ChessPosition tempDiagRightPos = new ChessPosition(forwardOne, diagRightCol);
+//                if (board.getPiece(tempDiagRightPos) != null && board.getPiece(tempDiagRightPos).getTeamColor() != piece.getTeamColor()) {
+//                    validMoves.add(tempDiagRightPos);
+//                }
+//            }
+
 }
