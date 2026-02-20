@@ -155,17 +155,24 @@ public class ChessGame {
         ChessPosition kingPosition = getKingPosition(board, teamColor);
         for (int row = 1; row < 9; row++) {
             for (int col = 1; col < 9; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
+                if (endMoveIsKingSpot(board, teamColor, kingPosition, row, col)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-                if(piece != null && piece.getTeamColor() != teamColor) {
-                    //attacking moves against teamColor
-                    Collection<ChessMove> moves = piece.pieceMoves(board, position);
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
-                    }
+    boolean endMoveIsKingSpot (ChessBoard board, TeamColor teamColor, ChessPosition kingPosition, int row, int col) {
+        ChessPosition position = new ChessPosition(row, col);
+        ChessPiece piece = board.getPiece(position);
+
+        if(piece != null && piece.getTeamColor() != teamColor) {
+            //attacking moves against teamColor
+            Collection<ChessMove> moves = piece.pieceMoves(board, position);
+            for (ChessMove move : moves) {
+                if (move.getEndPosition().equals(kingPosition)) {
+                    return true;
                 }
             }
         }

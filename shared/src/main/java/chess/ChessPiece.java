@@ -71,8 +71,7 @@ public class ChessPiece {
         switch(type) {
             case QUEEN -> calc = new QueenMovesCalculator();
             case KING -> calc = new KingMovesCalculator();
-            case ROOK -> calc = new RookMovesCalculator();
-            case BISHOP -> calc = new BishopMovesCalculator();
+            case ROOK, BISHOP -> calc = new MoveUntilBlockedCalculator();
             case KNIGHT -> calc = new KnightMovesCalculator();
             case PAWN -> calc = new PawnMovesCalculator();
             default -> throw new IllegalStateException("Unexpected Piece Type");
