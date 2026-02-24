@@ -285,11 +285,6 @@ public class ChessGame {
         return outOfStalemate;
     }
 
-
-
-//    public Collection<ChessMove> getPieceMoves (int row, int col) {
-//
-//    }
     /**
      * Sets this game's chessboard with a given board
      *
@@ -309,10 +304,3 @@ public class ChessGame {
     }
 
 }
-
-
-//OTHER OPTIMIZATION AND STYLE CHANGES:
-//--COMBINE 'ADD PIECE' ALL INTO ONE FUNCTION
-//--SIMPLIFY OTHER LARGE NESTS
-//--POSSIBLY COMBINE CODE FROM ROOK/BISHOP/QUEEN CLASSES
-//--SIMPLIFY PAWNMOVESCALCULATOR
