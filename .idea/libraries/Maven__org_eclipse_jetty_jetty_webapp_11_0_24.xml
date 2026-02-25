@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Maven: org.eclipse.jetty:jetty-webapp:11.0.24" type="java-imported" external-system-id="Maven">
+    <properties groupId="org.eclipse.jetty" artifactId="jetty-webapp" version="11.0.24" baseVersion="11.0.24" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-webapp/11.0.24/jetty-webapp-11.0.24.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-webapp/11.0.24/jetty-webapp-11.0.24-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jetty/jetty-webapp/11.0.24/jetty-webapp-11.0.24-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
