@@ -1,6 +1,5 @@
 package server;
 
-import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.json.JavalinGson;

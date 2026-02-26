@@ -19,7 +19,9 @@ public class UserService {
     }
 
     public RegisterResult register(RegisterRequest request) {
-        if (request.username == null || request.password == null || request.email == null) {
+        if (request.username == null || request.username.isBlank()
+                || request.password == null || request.password.isBlank()
+                || request.email == null || request.email.isBlank()) {
             throw new RuntimeException("Bad Request");
         }
 
