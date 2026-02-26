@@ -1,10 +1,11 @@
 package dataaccess;
 
-public class AuthDAO {
-    public static void clearAuth() {
+import model.AuthData;
+import model.UserData;
 
-    }
-    //createAuth
-    //getAuth
-    //deleteAuth
+public interface AuthDAO {
+
+    AuthData getAuth(String token);
+    void createAuth(AuthData authData);
+    void clearAuths();
 }

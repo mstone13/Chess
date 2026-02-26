@@ -2,7 +2,6 @@ package model;
 
 import java.util.Objects;
 
-//USE RECORD INSTEAD?? TF??
 public class UserData {
     private String username;
     private String password;
