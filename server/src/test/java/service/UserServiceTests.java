@@ -1,11 +1,7 @@
 package service;
 
-import dataaccess.AlreadyTakenException;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryUserDAO;
-import model.LoginRequest;
-import model.RegisterRequest;
-import model.RegisterOrLoginResult;
+import dataaccess.*;
+import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,18 +12,20 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UserServiceTests {
 
     private UserService userService;
+    private MemoryAuthDAO authDAO;
+    private MemoryUserDAO userDAO;
 
     @BeforeEach
     void setUp() {
-        MemoryUserDAO userDAO = new MemoryUserDAO();
-        MemoryAuthDAO authDAO = new MemoryAuthDAO();
+        userDAO = new MemoryUserDAO();
+        authDAO = new MemoryAuthDAO();
         userService = new UserService(userDAO, authDAO);
     }
 
     @Test
     void registerSuccess() throws AlreadyTakenException {
         RegisterRequest request = new RegisterRequest("barbie", "ken123", "barbara@email.com");
-        RegisterOrLoginResult result = userService.register(request);
+        UserResult result = userService.register(request);
 
         assertEquals("barbie", result.username);
         assertNotNull(result.authToken);
@@ -64,7 +62,7 @@ public class UserServiceTests {
         userService.register(request);
 
         LoginRequest loginRequest = new LoginRequest("batman", "robin");
-        RegisterOrLoginResult result = userService.login(loginRequest);
+        UserResult result = userService.login(loginRequest);
 
         assertEquals("batman", result.username);
         assertNotNull(result.authToken);
@@ -88,7 +86,24 @@ public class UserServiceTests {
         assertThrows(RuntimeException.class, () -> {
            userService.login(loginRequest);
         });
+    }
 
+    @Test
+    void logoutSuccess() throws AlreadyTakenException {
+        RegisterRequest request = new RegisterRequest("michael", "bluth", "123@gmail.com");
+        userService.register(request);
 
+        LoginRequest loginRequest = new LoginRequest("michael", "bluth");
+        UserResult loginResult = userService.login(loginRequest);
+
+        userService.logout(loginResult.authToken);
+        assertNull(authDAO.getAuth(loginResult.authToken));
+    }
+
+    @Test
+    void logoutFailure() {
+        assertThrows(RuntimeException.class, () -> {
+            userService.logout("token-non-existent");
+        });
     }
 }

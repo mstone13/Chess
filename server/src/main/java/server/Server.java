@@ -5,7 +5,7 @@ import io.javalin.*;
 import io.javalin.json.JavalinGson;
 import model.LoginRequest;
 import model.RegisterRequest;
-import model.RegisterOrLoginResult;
+import model.UserResult;
 import service.UserService;
 
 import java.util.Map;
@@ -43,7 +43,7 @@ public class Server {
         javalin.post("/user", ctx -> {
             RegisterRequest request = ctx.bodyAsClass(RegisterRequest.class);
             try {
-                RegisterOrLoginResult result = userService.register(request);
+                UserResult result = userService.register(request);
                 ctx.status(200).json(result);
             } catch (RuntimeException e) {
                 ctx.status(400).json(Map.of("message", "Error: bad request"));
@@ -53,11 +53,10 @@ public class Server {
         });
 
         // USER LOGIN
-
         javalin.post("/session", ctx -> {
            LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
            try {
-               RegisterOrLoginResult result = userService.login(request);
+               UserResult result = userService.login(request);
                ctx.status(200).json(result);
            } catch (RuntimeException e) {
                if (e.getMessage().contains("Bad Request")) {
@@ -69,6 +68,15 @@ public class Server {
         });
 
         // USER LOGOUT
+        javalin.delete("/session", ctx -> {
+            String authToken = ctx.header("Authorization");
+            try {
+                userService.logout(authToken);
+                ctx.status(200).json(Map.of());
+            } catch (RuntimeException e) {
+                ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+            }
+        });
 
         // LIST GAMES
 

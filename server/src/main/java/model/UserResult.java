@@ -1,12 +1,12 @@
 package model;
 
-public class RegisterOrLoginResult {
+public class UserResult {
     public String username;
     public String authToken;
 
-    public RegisterOrLoginResult() {}
+    public UserResult() {}
 
-    public RegisterOrLoginResult(String username, String authToken) {
+    public UserResult(String username, String authToken) {
         this.username = username;
         this.authToken = authToken;
     }

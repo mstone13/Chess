@@ -16,7 +16,7 @@ public class UserService {
         this.authDAO = authDAO;
     }
 
-    public RegisterOrLoginResult register(RegisterRequest request) throws AlreadyTakenException {
+    public UserResult register(RegisterRequest request) throws AlreadyTakenException {
         if (request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()
                 || request.email == null || request.email.isBlank()) {
@@ -38,7 +38,7 @@ public class UserService {
         return createAuth(request.username);
     }
 
-    public RegisterOrLoginResult login(LoginRequest request) {
+    public UserResult login(LoginRequest request) {
         if (request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()) {
             throw new RuntimeException("Bad Request");
@@ -56,13 +56,23 @@ public class UserService {
         return createAuth(existingUser.username());
     }
 
-    public RegisterOrLoginResult createAuth(String username) {
+    public void logout(String authToken) {
+        AuthData existingAuthData = authDAO.getAuth(authToken);
+
+        if (!existingAuthData.authToken().equals(authToken)) {
+            throw new RuntimeException("Error: unauthorized");
+        }
+
+        authDAO.deleteAuth(existingAuthData);
+    }
+
+    public UserResult createAuth(String username) {
         String token = UUID.randomUUID().toString();
 
         AuthData newAuth = new AuthData (token, username);
         authDAO.createAuth(newAuth);
 
-        return new RegisterOrLoginResult(username, token);
+        return new UserResult(username, token);
     }
 
 }
