@@ -3,8 +3,9 @@ package server;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.json.JavalinGson;
+import model.LoginRequest;
 import model.RegisterRequest;
-import model.RegisterResult;
+import model.RegisterOrLoginResult;
 import service.UserService;
 
 import java.util.Map;
@@ -42,16 +43,39 @@ public class Server {
         javalin.post("/user", ctx -> {
             RegisterRequest request = ctx.bodyAsClass(RegisterRequest.class);
             try {
-                RegisterResult result = userService.register(request);
+                RegisterOrLoginResult result = userService.register(request);
                 ctx.status(200).json(result);
             } catch (RuntimeException e) {
-                if (e.getMessage().contains("Bad Request")) {
-                    ctx.status(400).json(Map.of("message", "Error: bad request"));
-                } else {
-                    ctx.status(403).json(Map.of("message", "Error: already taken"));
-                }
+                ctx.status(400).json(Map.of("message", "Error: bad request"));
+            } catch (AlreadyTakenException e) {
+                ctx.status(403).json(Map.of("message", "Error: already taken"));
             }
         });
+
+        // USER LOGIN
+
+        javalin.post("/session", ctx -> {
+           LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
+           try {
+               RegisterOrLoginResult result = userService.login(request);
+               ctx.status(200).json(result);
+           } catch (RuntimeException e) {
+               if (e.getMessage().contains("Bad Request")) {
+                   ctx.status(400).json(Map.of("message", "Error: bad request"));
+               } else {
+                   ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+               }
+           }
+        });
+
+        // USER LOGOUT
+
+        // LIST GAMES
+
+        // CREATE GAME
+
+        // JOIN GAME
+
 
     }
 

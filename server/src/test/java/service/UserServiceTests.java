@@ -1,9 +1,11 @@
 package service;
 
+import dataaccess.AlreadyTakenException;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
+import model.LoginRequest;
 import model.RegisterRequest;
-import model.RegisterResult;
+import model.RegisterOrLoginResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,9 +25,9 @@ public class UserServiceTests {
     }
 
     @Test
-    void registerSuccess() {
+    void registerSuccess() throws AlreadyTakenException {
         RegisterRequest request = new RegisterRequest("barbie", "ken123", "barbara@email.com");
-        RegisterResult result = userService.register(request);
+        RegisterOrLoginResult result = userService.register(request);
 
         assertEquals("barbie", result.username);
         assertNotNull(result.authToken);
@@ -47,13 +49,46 @@ public class UserServiceTests {
     }
 
     @Test
-    void registerUserTaken() {
+    void registerUserTaken() throws AlreadyTakenException {
         RegisterRequest request = new RegisterRequest("orpheus", "eurydice", "wait@email.com");
         userService.register(request);
 
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(AlreadyTakenException.class, () -> {
             userService.register(request);
         });
     }
 
+    @Test
+    void loginSuccess() throws AlreadyTakenException {
+        RegisterRequest request = new RegisterRequest("batman", "robin", "alfred@email.com");
+        userService.register(request);
+
+        LoginRequest loginRequest = new LoginRequest("batman", "robin");
+        RegisterOrLoginResult result = userService.login(loginRequest);
+
+        assertEquals("batman", result.username);
+        assertNotNull(result.authToken);
+    }
+
+    @Test
+    void loginNonExistentUser() {
+        LoginRequest loginRequest = new LoginRequest("anthony", "kate");
+
+        assertThrows(RuntimeException.class, () -> {
+           userService.login(loginRequest);
+        });
+    }
+
+    @Test
+    void loginWrongPassword() throws AlreadyTakenException {
+        RegisterRequest request = new RegisterRequest("galinda", "upland", "oz@hotmail.com");
+        userService.register(request);
+
+        LoginRequest loginRequest = new LoginRequest("galinda", "tigelaar");
+        assertThrows(RuntimeException.class, () -> {
+           userService.login(loginRequest);
+        });
+
+
+    }
 }

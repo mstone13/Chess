@@ -1,11 +1,9 @@
 package service;
 
+import dataaccess.AlreadyTakenException;
 import dataaccess.AuthDAO;
 import dataaccess.UserDAO;
-import model.AuthData;
-import model.RegisterRequest;
-import model.RegisterResult;
-import model.UserData;
+import model.*;
 
 import java.util.UUID;
 
@@ -18,7 +16,7 @@ public class UserService {
         this.authDAO = authDAO;
     }
 
-    public RegisterResult register(RegisterRequest request) {
+    public RegisterOrLoginResult register(RegisterRequest request) throws AlreadyTakenException {
         if (request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()
                 || request.email == null || request.email.isBlank()) {
@@ -27,7 +25,7 @@ public class UserService {
 
         UserData existingUser = userDAO.getUser(request.username);
         if (existingUser != null) {
-            throw new RuntimeException("Error: username already taken");
+            throw new AlreadyTakenException("Error: username already taken");
         }
 
         UserData newUser = new UserData (
@@ -37,14 +35,34 @@ public class UserService {
         );
 
         userDAO.createUser(newUser);
+        return createAuth(request.username);
+    }
+
+    public RegisterOrLoginResult login(LoginRequest request) {
+        if (request.username == null || request.username.isBlank()
+                || request.password == null || request.password.isBlank()) {
+            throw new RuntimeException("Bad Request");
+        }
+
+        UserData existingUser = userDAO.getUser(request.username);
+        if (existingUser == null) {
+            throw new RuntimeException("Error: unauthorized");
+        }
+
+        if(!existingUser.password().equals(request.password)) {
+            throw new RuntimeException("Error: unauthorized");
+        }
+
+        return createAuth(existingUser.username());
+    }
+
+    public RegisterOrLoginResult createAuth(String username) {
         String token = UUID.randomUUID().toString();
 
-        AuthData newAuth = new AuthData (
-            token, request.username
-        );
+        AuthData newAuth = new AuthData (token, username);
         authDAO.createAuth(newAuth);
 
-        return new RegisterResult(request.username, token);
+        return new RegisterOrLoginResult(username, token);
     }
 
 }
