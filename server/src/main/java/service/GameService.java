@@ -2,6 +2,8 @@ package service;
 import dataaccess.*;
 import model.*;
 
+import java.util.List;
+
 public class GameService {
    private final AuthDAO authDAO;
    private final GameDAO gameDAO;
@@ -11,9 +13,19 @@ public class GameService {
        this.gameDAO = gameDAO;
    }
 
-//   public ListGamesResult listGames(String authToken) {
-//
-//   }
+   public ListGamesResponse listGames(String authToken) {
+        if (authToken == null || authToken.isBlank()) {
+            throw new RuntimeException("Bad Request");
+        }
+
+        AuthData authData = authDAO.getAuth(authToken);
+        if (authData == null || !authData.authToken().equals(authToken)) {
+            throw new RuntimeException("Error: unauthorized");
+        }
+
+        List<GameData> result = gameDAO.listGames();
+        return new ListGamesResponse(result);
+   }
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request) {
         if (authToken == null || request.gameName == null || request.gameName.isBlank()) {

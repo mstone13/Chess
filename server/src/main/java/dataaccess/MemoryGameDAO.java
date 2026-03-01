@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import model.GameData;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MemoryGameDAO implements GameDAO {
@@ -17,6 +18,8 @@ public class MemoryGameDAO implements GameDAO {
     @Override
     public GameData createGame(String gameName) {
         int gameID = nextGameID++;
+        String whiteUsername = "";
+        String blackUsername = "";
 
         var serializer = new Gson();
         var game = new ChessGame();
@@ -25,14 +28,19 @@ public class MemoryGameDAO implements GameDAO {
 
         GameData newGame = new GameData(
             gameID,
-            null,
-            null,
-            gameName,
-            game
+            whiteUsername,
+            blackUsername,
+            gameName
+//            game
         );
 
         games.put(gameID, newGame);
         return newGame;
+    }
+
+    @Override
+    public List<GameData> listGames() {
+        return List.copyOf(games.values());
     }
 
     @Override
