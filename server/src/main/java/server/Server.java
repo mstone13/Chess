@@ -2,10 +2,9 @@ package server;
 
 import dataaccess.*;
 import io.javalin.*;
+import model.*;
 import io.javalin.json.JavalinGson;
-import model.LoginRequest;
-import model.RegisterRequest;
-import model.UserResult;
+import service.GameService;
 import service.UserService;
 
 import java.util.Map;
@@ -14,13 +13,17 @@ public class Server {
 
     private final Javalin javalin;
     private final UserDAO userDAO;
-    private final UserService userService;
     private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
+    private final UserService userService;
+    private final GameService gameService;
 
     public Server() {
         userDAO = new MemoryUserDAO();
         authDAO = new MemoryAuthDAO();
+        gameDAO = new MemoryGameDAO();
         userService = new UserService(userDAO, authDAO);
+        gameService = new GameService(authDAO, gameDAO);
 
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
@@ -32,7 +35,7 @@ public class Server {
         // CLEAR APPLICATION
         javalin.delete("/db", ctx -> {
             userDAO.clearUsers();
-            GameDAO.clearGames();  //MAKE SURE CLEARGAMES AND CLEARAUTH ARE NOT STATIC!!!!!!!!!
+            gameDAO.clearGames();
             authDAO.clearAuths();
 
             ctx.status(200);
@@ -79,8 +82,25 @@ public class Server {
         });
 
         // LIST GAMES
+        javalin.get("/game", ctx -> {
+            String authToken = ctx.header("Authorization");
+        });
 
         // CREATE GAME
+        javalin.post("/game", ctx -> {
+           String authToken = ctx.header("Authorization");
+           CreateGameRequest request = ctx.bodyAsClass(CreateGameRequest.class);
+           try {
+               CreateGameResult result = gameService.createGame(authToken, request);
+               ctx.status(200).json(result);
+           } catch (RuntimeException e) {
+               if (e.getMessage().contains("Bad Request")) {
+                   ctx.status(400).json(Map.of("message", "Error: bad request"));
+               } else {
+                   ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+               }
+            }
+        });
 
         // JOIN GAME
 

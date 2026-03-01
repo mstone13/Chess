@@ -1,8 +1,6 @@
 package service;
 
-import dataaccess.AlreadyTakenException;
-import dataaccess.AuthDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 import model.*;
 
 import java.util.UUID;
