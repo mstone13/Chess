@@ -10,4 +10,5 @@ public interface GameDAO {
     GameData createGame(String gameName);
     List<GameData> listGames();
     void clearGames();
+    void updateGame(GameData updatedGame);
 }

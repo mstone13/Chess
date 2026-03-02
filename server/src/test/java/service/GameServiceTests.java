@@ -22,7 +22,7 @@ public class GameServiceTests {
         gameDAO = new MemoryGameDAO();
         authDAO = new MemoryAuthDAO();
         userService = new UserService(userDAO, authDAO);
-        gameService = new GameService(authDAO, gameDAO);
+        gameService = new GameService(authDAO, gameDAO, userDAO);
 
         RegisterRequest registerRequest = new RegisterRequest("jack", "wolfe", "orpheus@gmail.com");
         userService.register(registerRequest);

@@ -2,6 +2,7 @@ package server;
 
 import dataaccess.*;
 import io.javalin.*;
+import io.javalin.http.Context;
 import model.*;
 import io.javalin.json.JavalinGson;
 import service.GameService;
@@ -23,7 +24,7 @@ public class Server {
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();
         userService = new UserService(userDAO, authDAO);
-        gameService = new GameService(authDAO, gameDAO);
+        gameService = new GameService(authDAO, gameDAO, userDAO);
 
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
@@ -62,11 +63,7 @@ public class Server {
                UserResult result = userService.login(request);
                ctx.status(200).json(result);
            } catch (RuntimeException e) {
-               if (e.getMessage().contains("Bad Request")) {
-                   ctx.status(400).json(Map.of("message", "Error: bad request"));
-               } else {
-                   ctx.status(401).json(Map.of("message", "Error: unauthorized"));
-               }
+               runtimeExceptionCatch(ctx, e);
            }
         });
 
@@ -100,17 +97,32 @@ public class Server {
                CreateGameResult result = gameService.createGame(authToken, request);
                ctx.status(200).json(result);
            } catch (RuntimeException e) {
-               if (e.getMessage().contains("Bad Request")) {
-                   ctx.status(400).json(Map.of("message", "Error: bad request"));
-               } else {
-                   ctx.status(401).json(Map.of("message", "Error: unauthorized"));
-               }
+               runtimeExceptionCatch(ctx, e);
             }
         });
 
         // JOIN GAME
+        javalin.put("/game", ctx -> {
+            String authToken = ctx.header("Authorization");
+            JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
+            try {
+                gameService.joinGame(authToken, request);
+                ctx.status(200).json(Map.of());
+            } catch (RuntimeException e) {
+                runtimeExceptionCatch(ctx, e);
+            } catch (AlreadyTakenException e) {
+                ctx.status(403).json(Map.of("message", "Error: already taken"));
+            }
+        });
 
+    }
 
+    public void runtimeExceptionCatch(Context ctx, RuntimeException e) {
+        if (e.getMessage().contains("Bad Request")) {
+            ctx.status(400).json(Map.of("message", "Error: bad request"));
+        } else {
+            ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+        }
     }
 
     public int run(int desiredPort) {

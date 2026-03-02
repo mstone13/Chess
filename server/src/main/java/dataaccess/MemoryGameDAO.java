@@ -18,13 +18,13 @@ public class MemoryGameDAO implements GameDAO {
     @Override
     public GameData createGame(String gameName) {
         int gameID = nextGameID++;
-        String whiteUsername = "";
-        String blackUsername = "";
+        String whiteUsername = "null";
+        String blackUsername = "null";
 
         var serializer = new Gson();
         var game = new ChessGame();
         var json = serializer.toJson(game);
-        game = serializer.fromJson(json, ChessGame.class);
+//        game = serializer.fromJson(json, ChessGame.class);
 
         GameData newGame = new GameData(
             gameID,
@@ -45,4 +45,12 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public void clearGames() { games.clear(); }
+
+    @Override
+    public void updateGame(GameData updatedGame) {
+        if (!games.containsKey(updatedGame.gameID())) {
+            throw new RuntimeException("Game not found");
+        }
+        games.put(updatedGame.gameID(), updatedGame);
+    }
 }
