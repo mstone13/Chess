@@ -82,8 +82,8 @@ public class Server {
         javalin.get("/game", ctx -> {
             String authToken = ctx.header("Authorization");
             try {
-                ListGamesResponse result = gameService.listGames(authToken);
-                ctx.status(200).json(result); //maybe change later?
+                ListGamesResult result = gameService.listGames(authToken);
+                ctx.status(200).json(result);
             } catch (RuntimeException e) {
                 ctx.status(401).json(Map.of("message", "Error: unauthorized"));
             }

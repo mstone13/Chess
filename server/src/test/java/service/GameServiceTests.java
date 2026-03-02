@@ -5,23 +5,21 @@ import dataaccess.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GameServiceTests {
     private GameService gameService;
-    private UserService userService;
-    private MemoryUserDAO userDAO;
-    private MemoryAuthDAO authDAO;
     private MemoryGameDAO gameDAO;
     private String authToken;
 
     @BeforeEach
     void setUp() throws AlreadyTakenException {
-        userDAO = new MemoryUserDAO();
+        MemoryUserDAO userDAO = new MemoryUserDAO();
+        MemoryAuthDAO authDAO = new MemoryAuthDAO();
+        UserService userService = new UserService(userDAO, authDAO);
+
         gameDAO = new MemoryGameDAO();
-        authDAO = new MemoryAuthDAO();
-        userService = new UserService(userDAO, authDAO);
         gameService = new GameService(authDAO, gameDAO, userDAO);
 
         RegisterRequest registerRequest = new RegisterRequest("jack", "wolfe", "orpheus@gmail.com");
@@ -61,4 +59,58 @@ public class GameServiceTests {
         assertEquals("Error: unauthorized", exception.getMessage());
     }
 
+    @Test
+    void listGamesSuccess() {
+        CreateGameRequest request = new CreateGameRequest("TestGameName");
+        CreateGameRequest secondRequest = new CreateGameRequest("SecondGameName");
+
+        gameService.createGame(authToken, request);
+        gameService.createGame(authToken, secondRequest);
+
+        ListGamesResult response = gameService.listGames(authToken);
+
+        assertNotNull(response);
+        assertEquals(2, response.games().size());
+
+        List<GameData> games = response.games();
+
+        assertEquals("TestGameName", games.get(0).gameName());
+        assertEquals("SecondGameName", games.get(1).gameName());
+    }
+
+    @Test
+    void listGamesFailure() {
+        authToken = "FailureAuthToken";
+
+        assertThrows(RuntimeException.class, () -> {
+           gameService.listGames(authToken);
+        });
+    }
+
+    @Test
+    void joinGameSuccess() throws AlreadyTakenException {
+        CreateGameRequest request = new CreateGameRequest("JoinGameTest");
+        gameService.createGame(authToken, request);
+
+        JoinGameRequest joinGameRequest = new JoinGameRequest("WHITE", 1);
+        gameService.joinGame(authToken, joinGameRequest);
+
+        GameData game = gameDAO.getGame(1);
+        assertEquals("jack", game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
+
+    @Test
+    void joinGameFailure() throws AlreadyTakenException {
+        CreateGameRequest request = new CreateGameRequest("PopularGame");
+        gameService.createGame(authToken, request);
+
+        JoinGameRequest joinGameRequest = new JoinGameRequest("BLACK", 1);
+        gameService.joinGame(authToken, joinGameRequest);
+
+        JoinGameRequest anotherJoinRequest = new JoinGameRequest("BLACK", 1);
+        assertThrows(AlreadyTakenException.class, () -> {
+            gameService.joinGame(authToken, anotherJoinRequest);
+        });
+    }
 }

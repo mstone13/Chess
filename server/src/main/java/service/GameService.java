@@ -15,7 +15,7 @@ public class GameService {
        this.userDAO = userDAO;
    }
 
-   public ListGamesResponse listGames(String authToken) {
+   public ListGamesResult listGames(String authToken) {
         if (authToken == null || authToken.isBlank()) {
             throw new RuntimeException("Bad Request");
         }
@@ -23,7 +23,7 @@ public class GameService {
         checkAuthData(authToken);
 
         List<GameData> result = gameDAO.listGames();
-        return new ListGamesResponse(result);
+        return new ListGamesResult(result);
    }
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request) {
@@ -48,7 +48,7 @@ public class GameService {
 
        GameData gameData = gameDAO.getGame(request.gameID);
        if (gameData == null){ //check if the game already is taken!
-            throw new RuntimeException("Error: Unauthorized");
+            throw new RuntimeException("Error: Bad Request");
        }
 
        AuthData authData = authDAO.getAuth(authToken);

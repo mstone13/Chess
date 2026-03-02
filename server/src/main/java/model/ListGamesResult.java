@@ -1,8 +1,7 @@
 package model;
 
-public record ListGamesResult (
-     int gameID,
-     String whiteUsername,
-     String blackUsername,
-     String gameName
-     ){}
+import java.util.List;
+
+public record ListGamesResult(
+        List<GameData> games
+) {}
