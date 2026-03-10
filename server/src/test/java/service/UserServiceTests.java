@@ -23,7 +23,7 @@ public class UserServiceTests {
     }
 
     @Test
-    void registerSuccess() throws AlreadyTakenException {
+    void registerSuccess() throws AlreadyTakenException, DataAccessException {
         RegisterRequest request = new RegisterRequest("barbie", "ken123", "barbara@email.com");
         UserResult result = userService.register(request);
 
@@ -47,7 +47,7 @@ public class UserServiceTests {
     }
 
     @Test
-    void registerUserTaken() throws AlreadyTakenException {
+    void registerUserTaken() throws AlreadyTakenException, DataAccessException {
         RegisterRequest request = new RegisterRequest("orpheus", "eurydice", "wait@email.com");
         userService.register(request);
 
@@ -57,7 +57,7 @@ public class UserServiceTests {
     }
 
     @Test
-    void loginSuccess() throws AlreadyTakenException {
+    void loginSuccess() throws AlreadyTakenException, DataAccessException {
         RegisterRequest request = new RegisterRequest("batman", "robin", "alfred@email.com");
         userService.register(request);
 
@@ -78,7 +78,7 @@ public class UserServiceTests {
     }
 
     @Test
-    void loginWrongPassword() throws AlreadyTakenException {
+    void loginWrongPassword() throws AlreadyTakenException, DataAccessException {
         RegisterRequest request = new RegisterRequest("galinda", "upland", "oz@hotmail.com");
         userService.register(request);
 
@@ -89,7 +89,7 @@ public class UserServiceTests {
     }
 
     @Test
-    void logoutSuccess() throws AlreadyTakenException {
+    void logoutSuccess() throws AlreadyTakenException, DataAccessException {
         RegisterRequest request = new RegisterRequest("michael", "bluth", "123@gmail.com");
         userService.register(request);
 

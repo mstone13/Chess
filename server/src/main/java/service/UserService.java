@@ -14,7 +14,7 @@ public class UserService {
         this.authDAO = authDAO;
     }
 
-    public UserResult register(RegisterRequest request) throws AlreadyTakenException {
+    public UserResult register(RegisterRequest request) throws AlreadyTakenException, DataAccessException {
         if (request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()
                 || request.email == null || request.email.isBlank()) {
@@ -36,7 +36,7 @@ public class UserService {
         return createAuth(request.username);
     }
 
-    public UserResult login(LoginRequest request) {
+    public UserResult login(LoginRequest request) throws DataAccessException {
         if (request.username == null || request.username.isBlank()
                 || request.password == null || request.password.isBlank()) {
             throw new RuntimeException("Bad Request");

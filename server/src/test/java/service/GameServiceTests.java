@@ -14,7 +14,7 @@ public class GameServiceTests {
     private String authToken;
 
     @BeforeEach
-    void setUp() throws AlreadyTakenException {
+    void setUp() throws AlreadyTakenException, DataAccessException {
         MemoryUserDAO userDAO = new MemoryUserDAO();
         MemoryAuthDAO authDAO = new MemoryAuthDAO();
         UserService userService = new UserService(userDAO, authDAO);
