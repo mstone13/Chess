@@ -1,10 +1,6 @@
 package dataaccess;
 
-import dataaccess.SQLUserDAO;
-import dataaccess.DataAccessException;
-import model.CreateGameRequest;
 import model.UserData;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;

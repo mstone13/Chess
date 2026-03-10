@@ -54,7 +54,7 @@ public class UserService {
         return createAuth(existingUser.username());
     }
 
-    public void logout(String authToken) {
+    public void logout(String authToken) throws DataAccessException {
         AuthData existingAuthData = authDAO.getAuth(authToken);
 
         if (!existingAuthData.authToken().equals(authToken)) {
@@ -64,7 +64,7 @@ public class UserService {
         authDAO.deleteAuth(existingAuthData);
     }
 
-    public UserResult createAuth(String username) {
+    public UserResult createAuth(String username) throws DataAccessException {
         String token = UUID.randomUUID().toString();
 
         AuthData newAuth = new AuthData (token, username);

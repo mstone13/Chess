@@ -15,7 +15,7 @@ public class GameService {
        this.userDAO = userDAO;
    }
 
-   public ListGamesResult listGames(String authToken) {
+   public ListGamesResult listGames(String authToken) throws DataAccessException {
         if (authToken == null || authToken.isBlank()) {
             throw new RuntimeException("Bad Request");
         }
@@ -26,7 +26,7 @@ public class GameService {
         return new ListGamesResult(result);
    }
 
-    public CreateGameResult createGame(String authToken, CreateGameRequest request) {
+    public CreateGameResult createGame(String authToken, CreateGameRequest request) throws DataAccessException {
         if (authToken == null || request.gameName == null || request.gameName.isBlank()) {
             throw new RuntimeException("Bad Request");
         }
@@ -38,7 +38,7 @@ public class GameService {
         return new CreateGameResult(gameID);
     }
 
-    public void joinGame(String authToken, JoinGameRequest request) throws AlreadyTakenException {
+    public void joinGame(String authToken, JoinGameRequest request) throws AlreadyTakenException, DataAccessException {
        if (request.playerColor == null || request.playerColor.isBlank()
        || authToken == null || authToken.isBlank()) {
            throw new RuntimeException("Bad Request");
@@ -83,7 +83,7 @@ public class GameService {
        gameDAO.updateGame(updatedGame);
     }
 
-    public void checkAuthData(String authToken) {
+    public void checkAuthData(String authToken) throws DataAccessException {
         AuthData authData = authDAO.getAuth(authToken);
         if (authData == null || !authData.authToken().equals(authToken)) {
             throw new RuntimeException("Error: unauthorized"); //change later to different exception
