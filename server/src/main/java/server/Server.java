@@ -20,7 +20,7 @@ public class Server {
     private final GameService gameService;
 
     public Server() {
-        userDAO = new MemoryUserDAO();
+        userDAO = new SQLUserDAO();
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();
         userService = new UserService(userDAO, authDAO);

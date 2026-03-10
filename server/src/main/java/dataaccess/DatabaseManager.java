@@ -41,6 +41,48 @@ public class DatabaseManager {
      * }
      * </code>
      */
+
+    private final String[] createStatements = {
+            """
+            CREATE TABLE IF NOT EXISTS users (
+              username VARCHAR(50) NOT NULL PRIMARY KEY,
+              password VARCHAR(255) NOT NULL,
+              email VARCHAR(100) NOT NULL
+            ) 
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS auths (
+              authToken VARCHAR(225) NOT NULL PRIMARY KEY,
+              username VARCHAR(50) NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS games (
+               gameID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+               whiteUsername VARCHAR(50),
+               blackUsername VARCHAR(50),
+               gameName VARCHAR(100),
+               game TEXT
+            )
+            """
+    };
+
+    public void configureDatabase() throws DataAccessException {
+        DatabaseManager.createDatabase();
+
+        try (var conn = DatabaseManager.getConnection()) {
+
+            for (var statement : createStatements) {
+                try (var ps = conn.prepareStatement(statement)) {
+                    ps.executeUpdate();
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException("Failed to configure database", e);
+        }
+    }
+
     static Connection getConnection() throws DataAccessException {
         try {
             //do not wrap the following line with a try-with-resources
