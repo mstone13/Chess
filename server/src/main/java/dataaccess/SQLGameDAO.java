@@ -47,6 +47,11 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public int createGame(String gameName) throws DataAccessException {
+
+        if (gameName == null || gameName.isBlank()) {
+            throw new DataAccessException("Game Name cannot be null or empty");
+        }
+
         var serializer = new Gson();
         ChessGame game = new ChessGame();
         String json = serializer.toJson(game);
@@ -122,13 +127,17 @@ public class SQLGameDAO implements GameDAO {
 
         String statement = "UPDATE " + TABLE_NAME + " SET whiteUsername=?, blackUsername=?, gameName=?," +
                 " game=? WHERE gameID=?";
-        executeUpdate(
+        int rows = executeUpdate(
                 statement,
                 updatedGame.whiteUsername(),
                 updatedGame.blackUsername(),
                 updatedGame.gameName(),
                 json,
                 updatedGame.gameID());
+
+        if (rows == 0) {
+            throw new DataAccessException("Game does not exist");
+        }
     }
 
 
