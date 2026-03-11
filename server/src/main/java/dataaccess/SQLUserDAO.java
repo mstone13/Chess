@@ -21,6 +21,8 @@ public class SQLUserDAO implements UserDAO {
                                 rs.getString("password"),
                                 rs.getString("email")
                         );
+                    } else if (!rs.next()) {
+                        throw new DataAccessException("User does not exist");
                     }
                 }
             }

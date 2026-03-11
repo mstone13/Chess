@@ -11,17 +11,19 @@ public class SQLAuthDAO implements AuthDAO {
     private final String TABLE_NAME = "auths";
 
     @Override
-    public AuthData getAuth(String authToken) throws DataAccessException {
+    public AuthData getAuth(String auth) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT authToken, username FROM " + TABLE_NAME + " WHERE authToken=?";
+            var statement = "SELECT auth, username FROM " + TABLE_NAME + " WHERE auth=?";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
-                ps.setString(1, authToken);
+                ps.setString(1, auth);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         return new AuthData(
-                                rs.getString("authToken"),
+                                rs.getString("auth"),
                                 rs.getString("username")
                         );
+                    } else if (!rs.next()) {
+                        throw new DataAccessException("Auth does not exist");
                     }
                 }
             }
@@ -34,7 +36,7 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public void createAuth(AuthData authData) throws DataAccessException {
-        String statement = "INSERT INTO " + TABLE_NAME + " (authToken, username) VALUES (?, ?, ?)";
+        String statement = "INSERT INTO " + TABLE_NAME + " (auth, username) VALUES (?, ?)";
         executeUpdate(statement, authData.authToken(), authData.username());
     }
 
@@ -45,8 +47,12 @@ public class SQLAuthDAO implements AuthDAO {
     }
 
     @Override
-    public void deleteAuth(AuthData authData) {
-        String statement = "DELETE FROM " + TABLE_NAME + " WHERE authToken=?";
+    public void deleteAuth(AuthData authData) throws DataAccessException {
+        String statement = "DELETE FROM " + TABLE_NAME + " WHERE auth=?";
+        if (getAuth(authData.authToken()) == null) {
+            throw new DataAccessException("AuthData not in table.");
+        }
+        executeUpdate(statement, authData.authToken());
     }
 
     private int executeUpdate(String statement, Object... params) throws DataAccessException {

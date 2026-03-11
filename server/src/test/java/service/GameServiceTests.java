@@ -31,7 +31,7 @@ public class GameServiceTests {
     }
 
     @Test
-    void createGameSuccess() {
+    void createGameSuccess() throws DataAccessException {
         CreateGameRequest request = new CreateGameRequest("MyGameName");
         CreateGameResult result = gameService.createGame(authToken, request);
 
@@ -39,7 +39,7 @@ public class GameServiceTests {
     }
 
     @Test
-    void createGameEmptyGameName() {
+    void createGameEmptyGameName() throws DataAccessException{
         CreateGameRequest request = new CreateGameRequest("");
 
         assertThrows(RuntimeException.class, () -> {
@@ -48,7 +48,7 @@ public class GameServiceTests {
     }
 
     @Test
-    void createGameBadAuthToken() {
+    void createGameBadAuthToken() throws DataAccessException {
         CreateGameRequest request = new CreateGameRequest("AnotherGame");
         authToken = "WrongAuthToken";
 
@@ -60,7 +60,7 @@ public class GameServiceTests {
     }
 
     @Test
-    void listGamesSuccess() {
+    void listGamesSuccess() throws DataAccessException {
         CreateGameRequest request = new CreateGameRequest("TestGameName");
         CreateGameRequest secondRequest = new CreateGameRequest("SecondGameName");
 
@@ -88,7 +88,7 @@ public class GameServiceTests {
     }
 
     @Test
-    void joinGameSuccess() throws AlreadyTakenException {
+    void joinGameSuccess() throws AlreadyTakenException, DataAccessException {
         CreateGameRequest request = new CreateGameRequest("JoinGameTest");
         gameService.createGame(authToken, request);
 
@@ -101,7 +101,7 @@ public class GameServiceTests {
     }
 
     @Test
-    void joinGameFailure() throws AlreadyTakenException {
+    void joinGameFailure() throws AlreadyTakenException, DataAccessException {
         CreateGameRequest request = new CreateGameRequest("PopularGame");
         gameService.createGame(authToken, request);
 
