@@ -16,7 +16,7 @@ public class MemoryGameDAO implements GameDAO {
     public GameData getGame(int gameID) { return games.get(gameID); }
 
     @Override
-    public GameData createGame(String gameName) {
+    public int createGame(String gameName) {
         int gameID = nextGameID++;
         String whiteUsername = null;
         String blackUsername = null;
@@ -24,18 +24,18 @@ public class MemoryGameDAO implements GameDAO {
         var serializer = new Gson();
         var game = new ChessGame();
         var json = serializer.toJson(game);
-//        game = serializer.fromJson(json, ChessGame.class);
+        game = serializer.fromJson(json, ChessGame.class);
 
         GameData newGame = new GameData(
             gameID,
             whiteUsername,
             blackUsername,
-            gameName
-//            game
+            gameName,
+            game
         );
 
         games.put(gameID, newGame);
-        return newGame;
+        return gameID;
     }
 
     @Override

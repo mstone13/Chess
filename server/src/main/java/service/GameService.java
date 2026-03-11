@@ -33,8 +33,7 @@ public class GameService {
 
         checkAuthData(authToken);
 
-        GameData game = gameDAO.createGame(request.gameName);
-        int gameID = game.gameID();
+        int gameID = gameDAO.createGame(request.gameName);
         return new CreateGameResult(gameID);
     }
 
@@ -64,7 +63,8 @@ public class GameService {
                    gameData.gameID(),
                    username,
                    gameData.blackUsername(),
-                   gameData.gameName()
+                   gameData.gameName(),
+                   gameData.game()
            );
        } else if (request.playerColor.equals("BLACK")){
            if (gameData.blackUsername() != null) {
@@ -74,7 +74,8 @@ public class GameService {
                    gameData.gameID(),
                    gameData.whiteUsername(),
                    username,
-                   gameData.gameName()
+                   gameData.gameName(),
+                   gameData.game()
            );
        } else {
            throw new RuntimeException("Bad Request");

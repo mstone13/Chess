@@ -28,7 +28,7 @@ public class SQLAuthDAO implements AuthDAO {
                 }
             }
         }  catch (SQLException e) {
-            throw new DataAccessException("Error retrieving user", e);
+            throw new DataAccessException("Error retrieving auth", e);
         }
 
         return null;
