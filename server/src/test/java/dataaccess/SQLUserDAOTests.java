@@ -42,9 +42,7 @@ public class SQLUserDAOTests {
         userDAO.createUser(user);
 
         userDAO.clearUsers();
-        assertThrows(DataAccessException.class, () -> {
-            userDAO.getUser("Andrew");
-        });
+        assertNull(userDAO.getUser("Andrew"));
     }
 
     @Test
@@ -64,9 +62,7 @@ public class SQLUserDAOTests {
 
     @Test
     void getUserFailure() throws DataAccessException {
-        assertThrows(DataAccessException.class, () -> {
-            userDAO.getUser("FakeUsername");
-        });
+        assertNull(userDAO.getUser("FakeUsername"));
     }
 
     @Test
@@ -74,18 +70,12 @@ public class SQLUserDAOTests {
         UserData user = new UserData("RealUser", "RealPass", "real@email.com");
         userDAO.createUser(user);
 
-        assertThrows(DataAccessException.class, () -> {
-            userDAO.getUser("FakeUser");
-        });
-
-        // throw error if user does not exist ?>???/
+        assertNull(userDAO.getUser("FakeUser"));
     }
 
     @Test
     void createUserSuccess() throws DataAccessException {
-        assertThrows(DataAccessException.class, () -> {
-            userDAO.getUser("NewUser");
-        });
+        assertNull(userDAO.getUser("NewUser"));
 
         UserData user = new UserData("NewUser", "NewPass", "new@email.com");
         userDAO.createUser(user);

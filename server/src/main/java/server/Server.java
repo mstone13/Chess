@@ -31,6 +31,16 @@ public class Server {
             config.jsonMapper(new JavalinGson());
         });
 
+        javalin.exception(DataAccessException.class, (e, ctx) -> {
+           ctx.status(500);
+           ctx.json(Map.of("message", "Error: " + e.getMessage()));
+        });
+
+        javalin.exception(Exception.class, (e,ctx) -> {
+           ctx.status(500);
+           ctx.json(Map.of("message", "Error: Internal Server Error"));
+        });
+
         // Register your endpoints and exception handlers here.
 
         // CLEAR APPLICATION

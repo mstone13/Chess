@@ -41,9 +41,7 @@ public class SQLAuthDAOTests {
         authDAO.createAuth(authData);
 
         authDAO.clearAuths();
-        assertThrows(DataAccessException.class, () -> {
-            authDAO.getAuth("FakeToken");
-        });
+        assertNull(authDAO.getAuth("FakeToken"));
     }
 
     @Test
@@ -52,13 +50,11 @@ public class SQLAuthDAOTests {
         authDAO.createAuth(authData);
 
         authDAO.deleteAuth(authData);
-        assertThrows(DataAccessException.class, () -> {
-            authDAO.getAuth("Token");
-        });
+        assertNull(authDAO.getAuth("Token"));
     }
 
     @Test
-    void deleteAuthFailure() throws DataAccessException {
+    void deleteAuthFailure() {
         AuthData authData = new AuthData("Fake", "Example");
         assertThrows(DataAccessException.class, () -> {
            authDAO.deleteAuth(authData);
@@ -78,9 +74,7 @@ public class SQLAuthDAOTests {
 
     @Test
     void getAuthFailure() throws DataAccessException {
-        assertThrows (DataAccessException.class, () -> {
-                authDAO.getAuth("FakeAuth");
-        });
+        assertNull(authDAO.getAuth("FakeAuth"));
     }
 
     @Test
@@ -88,16 +82,12 @@ public class SQLAuthDAOTests {
         AuthData authData = new AuthData("AuthReal", "RealUser");
         authDAO.createAuth(authData);
 
-        assertThrows(DataAccessException.class, () -> {
-           authDAO.getAuth("AuthFake");
-        });
+        assertNull(authDAO.getAuth("AuthFake"));
     }
 
     @Test
     void createAuthSuccess() throws DataAccessException {
-        assertThrows(DataAccessException.class, () -> {
-            authDAO.getAuth("NewAuth");
-        });
+        assertNull(authDAO.getAuth("NewAuth"));
 
         AuthData authData = new AuthData("NewAuth", "NewUser");
         authDAO.createAuth(authData);
@@ -117,5 +107,4 @@ public class SQLAuthDAOTests {
            authDAO.createAuth(secondAuthData);
         });
     }
-    //GET AND CREATE TESTS (POSITIVE AND NEGATIVE)
 }

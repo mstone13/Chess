@@ -21,15 +21,12 @@ public class SQLUserDAO implements UserDAO {
                                 rs.getString("password"),
                                 rs.getString("email")
                         );
-                    } else if (!rs.next()) {
-                        throw new DataAccessException("User does not exist");
                     }
                 }
             }
         }  catch (SQLException e) {
             throw new DataAccessException("Error retrieving user", e);
         }
-
         return null;
     }
 
@@ -45,18 +42,22 @@ public class SQLUserDAO implements UserDAO {
         executeUpdate(statement);
     }
 
-    private int executeUpdate(String statement, Object... params) throws DataAccessException {
+    private void executeUpdate(String statement, Object... params) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(statement)) {
 
             for (int i = 0; i < params.length; i++) {
                 Object param = params[i];
-                if (param instanceof String p) ps.setString(i + 1, p);
-                else if (param instanceof Integer p) ps.setInt(i + 1, p);
-                else if (param == null) ps.setNull(i + 1, NULL);
+                switch (param) {
+                    case String p -> ps.setString(i + 1, p);
+                    case Integer p -> ps.setInt(i + 1, p);
+                    case null -> ps.setNull(i + 1, NULL);
+                    default -> {
+                    }
+                }
             }
 
-            return ps.executeUpdate();
+            ps.executeUpdate();
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to execute update: " + statement, e);

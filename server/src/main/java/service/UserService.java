@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.*;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.UUID;
 
@@ -26,9 +27,11 @@ public class UserService {
             throw new AlreadyTakenException("Error: username already taken");
         }
 
+        String hashedPassword = BCrypt.hashpw(request.password, BCrypt.gensalt());
+
         UserData newUser = new UserData (
                 request.username,
-                request.password,
+                hashedPassword,
                 request.email
         );
 
@@ -47,7 +50,10 @@ public class UserService {
             throw new RuntimeException("Error: unauthorized");
         }
 
-        if(!existingUser.password().equals(request.password)) {
+        String storedHash = existingUser.password();
+        boolean passwordMatch = BCrypt.checkpw(request.password, storedHash);
+
+        if(!passwordMatch) {
             throw new RuntimeException("Error: unauthorized");
         }
 

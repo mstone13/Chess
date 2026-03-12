@@ -67,16 +67,12 @@ public class SQLGameDAOTests {
 
     @Test
     void getGameFailure() throws DataAccessException {
-        assertThrows (DataAccessException.class, () -> {
-           gameDAO.getGame(15);
-        });
+        assertNull(gameDAO.getGame(15));
     }
 
     @Test
     void createGameSuccess() throws DataAccessException {
-        assertThrows(DataAccessException.class, () -> {
-           gameDAO.getGame(1);
-        });
+        assertNull(gameDAO.getGame(1));
 
         List<GameData> gamesBefore = gameDAO.listGames();
         assertTrue(gamesBefore.isEmpty());
@@ -91,7 +87,7 @@ public class SQLGameDAOTests {
     }
 
     @Test
-    void createGameFailure() throws DataAccessException {
+    void createGameFailure() {
         assertThrows(DataAccessException.class, () -> {
             gameDAO.createGame(null);
         });
@@ -153,9 +149,9 @@ public class SQLGameDAOTests {
                 game.game()
         );
 
-        assertThrows(DataAccessException.class, () -> {
-            gameDAO.updateGame(updatedGame);
-        });
+        gameDAO.updateGame(updatedGame);
+        GameData retrievedGame = gameDAO.getGame(77);
+        assertNull(retrievedGame);
     }
 
 }

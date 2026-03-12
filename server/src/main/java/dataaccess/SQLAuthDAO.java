@@ -22,8 +22,6 @@ public class SQLAuthDAO implements AuthDAO {
                                 rs.getString("auth"),
                                 rs.getString("username")
                         );
-                    } else if (!rs.next()) {
-                        throw new DataAccessException("Auth does not exist");
                     }
                 }
             }
@@ -55,18 +53,22 @@ public class SQLAuthDAO implements AuthDAO {
         executeUpdate(statement, authData.authToken());
     }
 
-    private int executeUpdate(String statement, Object... params) throws DataAccessException {
+    private void executeUpdate(String statement, Object... params) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(statement)) {
 
             for (int i = 0; i < params.length; i++) {
                 Object param = params[i];
-                if (param instanceof String p) ps.setString(i + 1, p);
-                else if (param instanceof Integer p) ps.setInt(i + 1, p);
-                else if (param == null) ps.setNull(i + 1, NULL);
+                switch (param) {
+                    case String p -> ps.setString(i + 1, p);
+                    case Integer p -> ps.setInt(i + 1, p);
+                    case null -> ps.setNull(i + 1, NULL);
+                    default -> {
+                    }
+                }
             }
 
-            return ps.executeUpdate();
+            ps.executeUpdate();
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to execute update: " + statement, e);
