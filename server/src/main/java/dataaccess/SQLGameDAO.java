@@ -7,13 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import chess.ChessGame;
-
-import static java.sql.Types.NULL;
-
+import static dataaccess.DatabaseManager.*;
 
 public class SQLGameDAO implements GameDAO {
 
-    private final String TABLE_NAME = "games";
+    private static final String TABLE_NAME = "games";
 
     @Override
     public GameData getGame(int gameID) throws DataAccessException {
@@ -127,39 +125,12 @@ public class SQLGameDAO implements GameDAO {
 
         String statement = "UPDATE " + TABLE_NAME + " SET whiteUsername=?, blackUsername=?, gameName=?," +
                 " game=? WHERE gameID=?";
-        int rows = executeUpdate(
+        executeUpdate(
                 statement,
                 updatedGame.whiteUsername(),
                 updatedGame.blackUsername(),
                 updatedGame.gameName(),
                 json,
                 updatedGame.gameID());
-
-//        if (rows == 0) {
-//            throw new DataAccessException("Game does not exist");
-//        }
-    }
-
-
-    private int executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(statement)) {
-
-            for (int i = 0; i < params.length; i++) {
-                Object param = params[i];
-                switch (param) {
-                    case String p -> ps.setString(i + 1, p);
-                    case Integer p -> ps.setInt(i + 1, p);
-                    case null -> ps.setNull(i + 1, NULL);
-                    default -> {
-                    }
-                }
-            }
-
-            return ps.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to execute update: " + statement, e);
-        }
     }
 }

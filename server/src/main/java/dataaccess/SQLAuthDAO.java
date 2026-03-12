@@ -1,14 +1,12 @@
 package dataaccess;
 
 import model.AuthData;
-
 import java.sql.*;
-
-import static java.sql.Types.NULL;
+import static dataaccess.DatabaseManager.executeUpdate;
 
 public class SQLAuthDAO implements AuthDAO {
 
-    private final String TABLE_NAME = "auths";
+    private static final String TABLE_NAME = "auths";
 
     @Override
     public AuthData getAuth(String auth) throws DataAccessException {
@@ -51,27 +49,5 @@ public class SQLAuthDAO implements AuthDAO {
             throw new DataAccessException("AuthData not in table.");
         }
         executeUpdate(statement, authData.authToken());
-    }
-
-    private void executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(statement)) {
-
-            for (int i = 0; i < params.length; i++) {
-                Object param = params[i];
-                switch (param) {
-                    case String p -> ps.setString(i + 1, p);
-                    case Integer p -> ps.setInt(i + 1, p);
-                    case null -> ps.setNull(i + 1, NULL);
-                    default -> {
-                    }
-                }
-            }
-
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to execute update: " + statement, e);
-        }
     }
 }

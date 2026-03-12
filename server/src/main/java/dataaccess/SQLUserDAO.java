@@ -2,11 +2,11 @@ package dataaccess;
 
 import model.UserData;
 import java.sql.*;
-import static java.sql.Types.NULL;
+import static dataaccess.DatabaseManager.executeUpdate;
 
 public class SQLUserDAO implements UserDAO {
 
-    private final String TABLE_NAME = "users";
+    private static final String TABLE_NAME = "users";
 
     @Override
     public UserData getUser(String username) throws DataAccessException {
@@ -40,27 +40,5 @@ public class SQLUserDAO implements UserDAO {
     public void clearUsers() throws DataAccessException {
         var statement = "TRUNCATE TABLE " + TABLE_NAME;
         executeUpdate(statement);
-    }
-
-    private void executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(statement)) {
-
-            for (int i = 0; i < params.length; i++) {
-                Object param = params[i];
-                switch (param) {
-                    case String p -> ps.setString(i + 1, p);
-                    case Integer p -> ps.setInt(i + 1, p);
-                    case null -> ps.setNull(i + 1, NULL);
-                    default -> {
-                    }
-                }
-            }
-
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Failed to execute update: " + statement, e);
-        }
     }
 }

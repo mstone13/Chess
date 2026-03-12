@@ -12,19 +12,32 @@ import java.util.Map;
 
 public class Server {
 
-    private final Javalin javalin;
-    private final UserDAO userDAO;
-    private final AuthDAO authDAO;
-    private final GameDAO gameDAO;
-    private final UserService userService;
-    private final GameService gameService;
+    private Javalin javalin;
+    private UserDAO userDAO;
+    private AuthDAO authDAO;
+    private GameDAO gameDAO;
+    private UserService userService;
+    private GameService gameService;
 
     public Server() {
+        initializeDAOs();
+        initializeServices();
+        initializeJavalin();
+        registerEndpoints();
+    }
+
+    private void initializeDAOs() {
         userDAO = new SQLUserDAO();
         authDAO = new SQLAuthDAO();
         gameDAO = new SQLGameDAO();
+    }
+
+    private void initializeServices() {
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(authDAO, gameDAO, userDAO);
+    }
+
+    private void initializeJavalin() {
 
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
@@ -32,17 +45,19 @@ public class Server {
         });
 
         javalin.exception(DataAccessException.class, (e, ctx) -> {
-           ctx.status(500);
-           ctx.json(Map.of("message", "Error: " + e.getMessage()));
+            ctx.status(500);
+            ctx.json(Map.of("message", "Error: " + e.getMessage()));
         });
 
-        javalin.exception(Exception.class, (e,ctx) -> {
-           ctx.status(500);
-           ctx.json(Map.of("message", "Error: Internal Server Error"));
+        javalin.exception(Exception.class, (e, ctx) -> {
+            ctx.status(500);
+            ctx.json(Map.of("message", "Error: Internal Server Error"));
         });
+    }
 
-        // Register your endpoints and exception handlers here.
+    // Register your endpoints and exception handlers here.
 
+    private void registerEndpoints() {
         // CLEAR APPLICATION
         javalin.delete("/db", ctx -> {
             userDAO.clearUsers();
@@ -68,13 +83,13 @@ public class Server {
 
         // USER LOGIN
         javalin.post("/session", ctx -> {
-           LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
-           try {
-               UserResult result = userService.login(request);
-               ctx.status(200).json(result);
-           } catch (RuntimeException e) {
-               runtimeExceptionCatch(ctx, e);
-           }
+            LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
+            try {
+                UserResult result = userService.login(request);
+                ctx.status(200).json(result);
+            } catch (RuntimeException e) {
+                runtimeExceptionCatch(ctx, e);
+            }
         });
 
         // USER LOGOUT
@@ -101,13 +116,13 @@ public class Server {
 
         // CREATE GAME
         javalin.post("/game", ctx -> {
-           String authToken = ctx.header("Authorization");
-           CreateGameRequest request = ctx.bodyAsClass(CreateGameRequest.class);
-           try {
-               CreateGameResult result = gameService.createGame(authToken, request);
-               ctx.status(200).json(result);
-           } catch (RuntimeException e) {
-               runtimeExceptionCatch(ctx, e);
+            String authToken = ctx.header("Authorization");
+            CreateGameRequest request = ctx.bodyAsClass(CreateGameRequest.class);
+            try {
+                CreateGameResult result = gameService.createGame(authToken, request);
+                ctx.status(200).json(result);
+            } catch (RuntimeException e) {
+                runtimeExceptionCatch(ctx, e);
             }
         });
 

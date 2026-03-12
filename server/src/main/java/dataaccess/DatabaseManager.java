@@ -3,7 +3,9 @@
 import java.sql.*;
 import java.util.Properties;
 
-public class DatabaseManager {
+import static java.sql.Types.NULL;
+
+ public class DatabaseManager {
     private static String databaseName;
     private static String dbUsername;
     private static String dbPassword;
@@ -67,23 +69,7 @@ public class DatabaseManager {
             """
     };
 
-    public void configureDatabase() throws DataAccessException {
-        DatabaseManager.createDatabase();
-
-        try (var conn = DatabaseManager.getConnection()) {
-
-            for (var statement : createStatements) {
-                try (var ps = conn.prepareStatement(statement)) {
-                    ps.executeUpdate();
-                }
-            }
-
-        } catch (Exception e) {
-            throw new DataAccessException("Failed to configure database", e);
-        }
-    }
-
-    static Connection getConnection() throws DataAccessException {
+     static Connection getConnection() throws DataAccessException {
         try {
             //do not wrap the following line with a try-with-resources
             var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
@@ -115,5 +101,27 @@ public class DatabaseManager {
         var host = props.getProperty("db.host");
         var port = Integer.parseInt(props.getProperty("db.port"));
         connectionUrl = String.format("jdbc:mysql://%s:%d", host, port);
+    }
+
+    public static void executeUpdate(String statement, Object... params) throws DataAccessException {
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(statement)) {
+
+            for (int i = 0; i < params.length; i++) {
+                Object param = params[i];
+                switch (param) {
+                    case String p -> ps.setString(i + 1, p);
+                    case Integer p -> ps.setInt(i + 1, p);
+                    case null -> ps.setNull(i + 1, NULL);
+                    default -> {
+                    }
+                }
+            }
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to execute update: " + statement, e);
+        }
     }
 }
