@@ -69,7 +69,23 @@ import static java.sql.Types.NULL;
             """
     };
 
-     static Connection getConnection() throws DataAccessException {
+    public void configureDatabase() throws DataAccessException {
+        DatabaseManager.createDatabase();
+
+        try (var conn = DatabaseManager.getConnection()) {
+
+            for (var statement : createStatements) {
+                try (var ps = conn.prepareStatement(statement)) {
+                    ps.executeUpdate();
+                }
+            }
+
+        } catch (Exception e) {
+            throw new DataAccessException("Failed to configure database", e);
+        }
+    }
+
+    static Connection getConnection() throws DataAccessException {
         try {
             //do not wrap the following line with a try-with-resources
             var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);

@@ -26,6 +26,19 @@ public class Server {
         registerEndpoints();
     }
 
+    public static void main(String[] args) {
+        try {
+            new DatabaseManager().configureDatabase();
+
+        } catch (DataAccessException e) {
+            System.err.println("Failed to configure database: " + e.getMessage());
+            return;
+        }
+
+        Server server = new Server();
+        server.run(7000);
+    }
+
     private void initializeDAOs() {
         userDAO = new SQLUserDAO();
         authDAO = new SQLAuthDAO();
@@ -111,6 +124,8 @@ public class Server {
                 ctx.status(200).json(result);
             } catch (RuntimeException e) {
                 ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+            } catch (DataAccessException e) {
+                ctx.status(500).json(Map.of("message", "Error: " + e.getMessage()));
             }
         });
 
