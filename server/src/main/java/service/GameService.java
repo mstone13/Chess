@@ -27,11 +27,15 @@ public class GameService {
    }
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request) throws DataAccessException {
-        if (authToken == null || request.gameName == null || request.gameName.isBlank()) {
-            throw new RuntimeException("Bad Request");
+        if (authToken == null || authToken.isBlank()) {
+            throw new RuntimeException("Error: unauthorized");
         }
 
         checkAuthData(authToken);
+
+        if (request.gameName == null || request.gameName.isBlank()) {
+            throw new RuntimeException("Bad Request");
+        }
 
         int gameID = gameDAO.createGame(request.gameName);
         return new CreateGameResult(gameID);
@@ -46,8 +50,8 @@ public class GameService {
        checkAuthData(authToken);
 
        GameData gameData = gameDAO.getGame(request.gameID);
-       if (gameData == null){ //check if the game already is taken!
-            throw new RuntimeException("Error: Bad Request");
+       if (gameData == null){
+            throw new RuntimeException("Bad Request");
        }
 
        AuthData authData = authDAO.getAuth(authToken);

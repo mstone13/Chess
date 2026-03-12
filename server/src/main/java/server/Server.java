@@ -20,23 +20,17 @@ public class Server {
     private GameService gameService;
 
     public Server() {
+        try {
+            DatabaseManager dbManager = new DatabaseManager();
+            dbManager.configureDatabase();
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Failed to configure database", e);
+        }
+
         initializeDAOs();
         initializeServices();
         initializeJavalin();
         registerEndpoints();
-    }
-
-    public static void main(String[] args) {
-        try {
-            new DatabaseManager().configureDatabase();
-
-        } catch (DataAccessException e) {
-            System.err.println("Failed to configure database: " + e.getMessage());
-            return;
-        }
-
-        Server server = new Server();
-        server.run(7000);
     }
 
     private void initializeDAOs() {
@@ -87,10 +81,10 @@ public class Server {
             try {
                 UserResult result = userService.register(request);
                 ctx.status(200).json(result);
-            } catch (RuntimeException e) {
-                ctx.status(400).json(Map.of("message", "Error: bad request"));
             } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
+            } catch (RuntimeException e) {
+                ctx.status(400).json(Map.of("message", "Error: bad request"));
             }
         });
 
@@ -148,10 +142,10 @@ public class Server {
             try {
                 gameService.joinGame(authToken, request);
                 ctx.status(200).json(Map.of());
+            }catch (AlreadyTakenException e) {
+                ctx.status(403).json(Map.of("message", "Error: already taken"));
             } catch (RuntimeException e) {
                 runtimeExceptionCatch(ctx, e);
-            } catch (AlreadyTakenException e) {
-                ctx.status(403).json(Map.of("message", "Error: already taken"));
             }
         });
 
