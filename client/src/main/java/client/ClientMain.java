@@ -7,6 +7,7 @@ public class ClientMain {
         var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
         System.out.println("♕ 240 Chess Client: " + piece);
 
-        ChessClient.run();
+        ChessClient client = new ChessClient();
+        client.run();
     }
 }

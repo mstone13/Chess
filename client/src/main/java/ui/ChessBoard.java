@@ -130,10 +130,10 @@ public class ChessBoard {
 
         while (col < 8) {
             if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_PINK);
+                out.print(SET_BG_COLOR_WHITE);
                 out.print(SET_TEXT_COLOR_RED);
             } else {
-                out.print(SET_BG_COLOR_WHITE);
+                out.print(SET_BG_COLOR_PINK);
                 out.print(SET_TEXT_COLOR_RED);
             }
             out.print(" P ");
@@ -147,11 +147,11 @@ public class ChessBoard {
         out.print(" 1 ");
         for (String piece : pieces) {
             if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_WHITE);
+                out.print(SET_BG_COLOR_PINK);
                 out.print(SET_TEXT_COLOR_RED);
                 out.print(piece);
             } else {
-                out.print(SET_BG_COLOR_PINK);
+                out.print(SET_BG_COLOR_WHITE);
                 out.print(SET_TEXT_COLOR_RED);
                 out.print(piece);
             }
