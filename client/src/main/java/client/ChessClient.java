@@ -1,6 +1,8 @@
 package client;
 
+import communicator.ClientCommunicator;
 import facade.ServerFacade;
+import model.*;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +12,12 @@ import java.util.Scanner;
 public class ChessClient {
     private static boolean signedIn = false;
     private static Scanner scanner = new Scanner(System.in);
-    private final ServerFacade facade = new ServerFacade();
+    private final ServerFacade facade;
+
+    public ChessClient() {
+        ClientCommunicator communicator = new ClientCommunicator("http://localhost:8080"); //mm maybe wrong?
+        this.facade = new ServerFacade(communicator);
+    }
 
 
     public void run() {
@@ -32,8 +39,8 @@ public class ChessClient {
     public void directAction(PrintStream out, String result) {
         if (signedIn) {
             switch (result) {
-                case "1" -> printHelp();
-                case "3" -> login(out);
+                case "1" -> printHelp(out, signedIn);
+//                case "3" -> logout(out);
 //                case "4" -> createGame();
 //                case "5" -> listGames();
 //                case "6" -> playGame();
@@ -41,9 +48,9 @@ public class ChessClient {
             }
         } else {
             switch (result) {
-                case "1" -> printHelp();
-//                case "3" -> logout();
-//                case "4" -> register();
+                case "1" -> printHelp(out, signedIn);
+                case "3" -> login(out);
+                case "4" -> register(out);
             }
         }
     }
@@ -53,14 +60,46 @@ public class ChessClient {
         out.println("Input username: ");
         String username = scanner.nextLine();
 
-        out.print("Input password: ");
+        out.println("Input password: ");
         String password = scanner.nextLine();
 
-        facade.login(username, password);
+        UserResult result = facade.login(username, password);
+        out.println("Welcome " + result.username + "!!");
+
     }
 
-    public void printHelp(){
+    public void register(PrintStream out) {
+        out.println("Input username: ");
+        String username = scanner.nextLine();
+
+        out.println("Input password: ");
+        String password = scanner.nextLine();
+
+        out.println("Input email: ");
+        String email = scanner.nextLine();
+
+        UserResult result = facade.register(username, password, email);
+        out.println("Hello there, " + result.username);
+    }
+
+    public void printHelp(PrintStream out, boolean signedIn){
         // print help statements
+        if (signedIn) {
+            out.println("""
+                    Quit: Exit the program
+                    Logout: Return to sign-in menu
+                    Create Game: Start new game
+                    List Games: See a list of all created games
+                    Play Game: Join and play an existing game
+                    Observe Game: Join and observe an existing game
+                    """);
+        } else {
+            out.println("""
+                    Quit: Exit the program
+                    Login: Sign into your existing user
+                    Register: Create a new user
+                    """);
+        }
     }
 
     public void printMenu(PrintStream out) {
