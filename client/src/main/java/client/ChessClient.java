@@ -3,31 +3,29 @@ package client;
 import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
-
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-
 public class ChessClient {
     private static boolean signedIn = false;
-    private static Scanner scanner = new Scanner(System.in);
+    private String authToken = null;
+    private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
 
     public ChessClient() {
-        ClientCommunicator communicator = new ClientCommunicator("http://localhost:8080"); //mm maybe wrong?
+        ClientCommunicator communicator = new ClientCommunicator("http://localhost:8080");
         this.facade = new ServerFacade(communicator);
     }
-
 
     public void run() {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         out.println("Welcome to the 240 Chess Menu!");
-        printMenu(out);
         var result = "";
 
         while (!result.equals("2")) {
+            printMenu(out);
             result = scanner.nextLine();
             directAction(out, result);
         }
@@ -37,25 +35,33 @@ public class ChessClient {
     }
 
     public void directAction(PrintStream out, String result) {
+        UserResult loginResult;
+
         if (signedIn) {
             switch (result) {
-                case "1" -> printHelp(out, signedIn);
-//                case "3" -> logout(out);
-//                case "4" -> createGame();
+                case "1" -> printHelp(out);
+                case "3" -> logout(out, authToken);
+                case "4" -> createGame(out, authToken);
 //                case "5" -> listGames();
 //                case "6" -> playGame();
 //                case "7" -> observeGame();
             }
         } else {
             switch (result) {
-                case "1" -> printHelp(out, signedIn);
-                case "3" -> login(out);
+                case "1" -> printHelp(out);
+                case "3" -> {
+                    loginResult = login(out);
+                    if (loginResult != null) {
+                        authToken = loginResult.authToken;
+                        signedIn = true;
+                    }
+                }
                 case "4" -> register(out);
             }
         }
     }
 
-    public void login(PrintStream out) {
+    public UserResult login(PrintStream out) {
         // function to let user login
         out.println("Input username: ");
         String username = scanner.nextLine();
@@ -66,6 +72,7 @@ public class ChessClient {
         UserResult result = facade.login(username, password);
         out.println("Welcome " + result.username + "!!");
 
+        return result;
     }
 
     public void register(PrintStream out) {
@@ -79,10 +86,25 @@ public class ChessClient {
         String email = scanner.nextLine();
 
         UserResult result = facade.register(username, password, email);
-        out.println("Hello there, " + result.username);
+        out.println("Hello there, " + result.username); //fix! last time it showed null?
     }
 
-    public void printHelp(PrintStream out, boolean signedIn){
+    public void logout(PrintStream out, String authToken) {
+        facade.logout(authToken);
+        this.authToken = null;
+        signedIn = false;
+
+        out.println("Logged out successfully. Come back soon!");
+    }
+
+    public void createGame(PrintStream out, String authToken) {
+        out.println("Input game name: ");
+        String gameName = scanner.nextLine();
+        CreateGameResult result = facade.createGame(authToken, gameName);
+        out.println("Awesome! Your game ID is: " + result.gameID);
+    }
+
+    public void printHelp(PrintStream out){
         // print help statements
         if (signedIn) {
             out.println("""

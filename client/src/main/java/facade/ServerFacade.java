@@ -30,11 +30,21 @@ public class ServerFacade {
         return serializer.fromJson(jsonResponse, UserResult.class);
     }
 
-    public void logout() {}
+    public void logout(String authToken) {
+        String jsonRequest = serializer.toJson(authToken);
+        communicator.sendRequest("/session", jsonRequest);
+        assert authToken == null;
+    }
 
     public void listGames() {}
 
-    public void createGame() {}
+    public CreateGameResult createGame(String authToken, String gameName) {
+        CreateGameRequest request = new CreateGameRequest(gameName);
+        String jsonRequest = serializer.toJson(authToken + request);
+
+        String jsonResponse = communicator.sendRequest("/game", jsonRequest);
+        return serializer.fromJson(jsonResponse, CreateGameResult.class);
+    }
 
     public void joinGame() {}
 
