@@ -1,6 +1,6 @@
 package communicator;
 
-import model.LoginRequest;
+import model.*;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -17,11 +17,17 @@ public class ClientCommunicator {
         this.client = HttpClient.newHttpClient();
     }
 
-    public String sendRequest(String endpoint, String jsonBody) {
+    public String sendRequest(String endpoint, String jsonBody, String authToken) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl + endpoint))
-                    .header("Content-Type", "application/json")
+                    .header("Content-Type", "application/json");
+
+            if (authToken != null && !authToken.isBlank()) {
+                builder.header("Authorization", authToken);
+            }
+
+            HttpRequest request = builder
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
 

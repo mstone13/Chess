@@ -30,7 +30,7 @@ public class ChessClient {
             directAction(out, result);
         }
 
-        out.println("Come back soon :)");
+        out.println("Exiting the menu. Come back soon :)");
 //        ChessBoard.run();
     }
 
@@ -62,31 +62,38 @@ public class ChessClient {
     }
 
     public UserResult login(PrintStream out) {
-        // function to let user login
-        out.println("Input username: ");
-        String username = scanner.nextLine();
+        try {
+            out.println("Input username: ");
+            String username = scanner.nextLine();
 
-        out.println("Input password: ");
-        String password = scanner.nextLine();
+            out.println("Input password: ");
+            String password = scanner.nextLine();
 
-        UserResult result = facade.login(username, password);
-        out.println("Welcome " + result.username + "!!");
-
-        return result;
+            UserResult result = facade.login(username, password);
+            out.println("Welcome " + result.username + "!!");
+            return result;
+        } catch (Exception e) {
+            out.println("Login failed: " + e.getMessage());
+        }
+        return null;
     }
 
     public void register(PrintStream out) {
-        out.println("Input username: ");
-        String username = scanner.nextLine();
+        try {
+            out.println("Input username: ");
+            String username = scanner.nextLine();
 
-        out.println("Input password: ");
-        String password = scanner.nextLine();
+            out.println("Input password: ");
+            String password = scanner.nextLine();
 
-        out.println("Input email: ");
-        String email = scanner.nextLine();
+            out.println("Input email: ");
+            String email = scanner.nextLine();
 
-        UserResult result = facade.register(username, password, email);
-        out.println("Hello there, " + result.username); //fix! last time it showed null?
+            UserResult result = facade.register(username, password, email);
+            out.println("Hello there, " + result.username);
+        } catch (Exception e){
+            out.println("Registration failed: " + e.getMessage());
+        }
     }
 
     public void logout(PrintStream out, String authToken) {
@@ -94,7 +101,7 @@ public class ChessClient {
         this.authToken = null;
         signedIn = false;
 
-        out.println("Logged out successfully. Come back soon!");
+        out.println("Logged out successfully.");
     }
 
     public void createGame(PrintStream out, String authToken) {
