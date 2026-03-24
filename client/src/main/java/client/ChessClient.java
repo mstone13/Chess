@@ -3,9 +3,11 @@ package client;
 import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
-import ui.ChessBoard;
+import ui.*;
 
 import java.awt.*;
+import java.util.HashMap;
+import java.util.List;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
@@ -125,6 +127,7 @@ public class ChessClient {
                 out.println(counter + ": " + game.gameName());
                 counter++;
             }
+
         } catch (Exception e) {
             out.println("Failed to list games: " + e.getMessage());
         }
@@ -140,7 +143,8 @@ public class ChessClient {
                 out.println("Input player color (black or white):");
                 playerColor = scanner.nextLine();
 
-                if (playerColor.equalsIgnoreCase("white") || playerColor.equalsIgnoreCase("black")) {
+                if (playerColor.equalsIgnoreCase("white")
+                        || playerColor.equalsIgnoreCase("black")) {
                     break;
                 } else {
                     out.println("Please input a valid chess player color.");
@@ -148,7 +152,10 @@ public class ChessClient {
             }
 
             facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
-            ChessBoard.run(); //edit chessBoard to flip depending on the player color
+
+            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
+            GameData game = orderedGames.get(gameNum);
+            ChessBoard.run(game); //edit chessBoard to flip depending on the player color
 
         } catch (Exception e) {
             out.println("Failed to join game: " + e.getMessage());
@@ -161,13 +168,23 @@ public class ChessClient {
             out.println("Input game number: ");
             int gameNum = Integer.parseInt(scanner.nextLine());
 
-            ListGamesResult result = facade.listGames(authToken);
-
-            ChessBoard.run(); //again, edit chessboard to match the specific game
+            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
+            GameData game = orderedGames.get(gameNum);
+            ChessBoard.run(game); //again, edit chessboard to match the specific game
 
         } catch (Exception e) {
             out.println("Failed to observe game: " + e.getMessage());
         }
+    }
+
+    public HashMap<Integer, GameData> orderedGameList(List<GameData> games) {
+        HashMap<Integer, GameData> orderedGames = new HashMap<>();
+        int counter = 1;
+        for (GameData game : games){
+            orderedGames.put(counter, game);
+        }
+
+        return orderedGames;
     }
 
     public void printHelp(PrintStream out){
@@ -191,6 +208,7 @@ public class ChessClient {
     }
 
     public void printMenu(PrintStream out) {
+        out.println();
         if (signedIn) {
             out.print("""
             >> 1. Help

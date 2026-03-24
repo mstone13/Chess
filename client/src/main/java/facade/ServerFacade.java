@@ -99,7 +99,6 @@ public class ServerFacade {
 
     public void clearApplication() {
         communicator.sendDeleteRequest("/db");
-
     }
 
 
