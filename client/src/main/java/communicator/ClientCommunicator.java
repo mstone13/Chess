@@ -1,7 +1,5 @@
 package communicator;
 
-import model.*;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -17,7 +15,7 @@ public class ClientCommunicator {
         this.client = HttpClient.newHttpClient();
     }
 
-    public String sendRequest(String endpoint, String jsonBody, String authToken) {
+    public String sendPostRequest(String endpoint, String jsonBody, String authToken) {
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl + endpoint))
@@ -42,4 +40,53 @@ public class ClientCommunicator {
             throw new RuntimeException("Request failed: " + e.getMessage(), e);
         }
     }
+
+    public String sendGetRequest(String endpoint, String authToken) {
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(serverUrl + endpoint))
+                    .header("Content-Type", "application/json");
+
+            if (authToken != null && !authToken.isBlank()) {
+                builder.header("Authorization", authToken);
+            }
+            HttpRequest request = builder.GET().build();
+
+            HttpResponse<String> response = client.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            return response.body();
+        } catch (Exception e) {
+            throw new RuntimeException("Request failed: " + e.getMessage(), e);
+        }
+    }
+
+    public String sendPutRequest(String endpoint, String jsonBody, String authToken) {
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(serverUrl + endpoint))
+                    .header("Content-Type", "application/json");
+
+            if (authToken != null && !authToken.isBlank()) {
+                builder.header("Authorization", authToken);
+            }
+
+            HttpRequest request = builder
+                    .PUT(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = client.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            return response.body();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Request failed: " + e.getMessage(), e);
+        }
+    }
+
 }

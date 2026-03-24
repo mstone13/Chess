@@ -3,6 +3,8 @@ package client;
 import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
+import ui.ChessBoard;
+
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
@@ -31,7 +33,6 @@ public class ChessClient {
         }
 
         out.println("Exiting the menu. Come back soon :)");
-//        ChessBoard.run();
     }
 
     public void directAction(PrintStream out, String result) {
@@ -40,10 +41,10 @@ public class ChessClient {
         if (signedIn) {
             switch (result) {
                 case "1" -> printHelp(out);
-                case "3" -> logout(out, authToken);
-                case "4" -> createGame(out, authToken);
-//                case "5" -> listGames();
-//                case "6" -> playGame();
+                case "3" -> logout(out);
+                case "4" -> createGame(out);
+                case "5" -> listGames(out);
+                case "6" -> joinGame(out);
 //                case "7" -> observeGame();
             }
         } else {
@@ -96,7 +97,7 @@ public class ChessClient {
         }
     }
 
-    public void logout(PrintStream out, String authToken) {
+    public void logout(PrintStream out) {
         facade.logout(authToken);
         this.authToken = null;
         signedIn = false;
@@ -104,11 +105,55 @@ public class ChessClient {
         out.println("Logged out successfully.");
     }
 
-    public void createGame(PrintStream out, String authToken) {
-        out.println("Input game name: ");
-        String gameName = scanner.nextLine();
-        CreateGameResult result = facade.createGame(authToken, gameName);
-        out.println("Awesome! Your game ID is: " + result.gameID);
+    public void createGame(PrintStream out) {
+        try {
+            out.println("Input game name: ");
+            String gameName = scanner.nextLine();
+            facade.createGame(authToken, gameName);
+            out.println("Game '" + gameName + "' created successfully.");
+        } catch (Exception e) {
+            out.println("Failed to create game: " + e.getMessage());
+        }
+    }
+
+    public void listGames(PrintStream out) {
+        try {
+            ListGamesResult result = facade.listGames(authToken);
+            int counter = 1;
+            for (GameData game : result.games()) {
+                out.println(counter + ": " + game.gameName());
+                counter++;
+            }
+        } catch (Exception e) {
+            out.println("Failed to list games: " + e.getMessage());
+        }
+    }
+
+    public void joinGame(PrintStream out) {
+        try {
+            out.println("Input game number: ");
+            int gameNum = Integer.parseInt(scanner.nextLine());
+
+            String playerColor;
+            while (true) {
+                out.println("Input player color (black or white):");
+                playerColor = scanner.nextLine();
+
+                if (playerColor.equalsIgnoreCase("white") || playerColor.equalsIgnoreCase("black")) {
+                    break;
+                } else {
+                    out.println("Please input a valid chess player color.");
+                }
+            }
+
+            facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
+            ChessBoard.run(); //edit chessBoard to flip depending on the player color
+
+        } catch (Exception e) {
+            out.println("Failed to join game: " + e.getMessage());
+        }
+
+
     }
 
     public void printHelp(PrintStream out){
@@ -151,7 +196,6 @@ public class ChessClient {
             """);
         }
     }
-
 
 
 }

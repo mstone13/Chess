@@ -16,7 +16,7 @@ public class ServerFacade {
         RegisterRequest request = new RegisterRequest(username, password, email);
         String jsonRequest = serializer.toJson(request);
 
-        String jsonResponse = communicator.sendRequest("/user", jsonRequest, null);
+        String jsonResponse = communicator.sendPostRequest("/user", jsonRequest, null);
         if (jsonResponse.contains("message")){
             String message;
             if (jsonResponse.contains("already taken")) {
@@ -33,7 +33,7 @@ public class ServerFacade {
         LoginRequest request = new LoginRequest(username, password);
         String jsonRequest = serializer.toJson(request);
 
-        String jsonResponse = communicator.sendRequest("/session", jsonRequest, null);
+        String jsonResponse = communicator.sendPostRequest("/session", jsonRequest, null);
         if (jsonResponse.contains("message")) {
             String message;
             if (jsonResponse.contains("unauthorized")) {
@@ -49,17 +49,25 @@ public class ServerFacade {
 
     public void logout(String authToken) {
         String jsonRequest = serializer.toJson(authToken);
-        communicator.sendRequest("/session", jsonRequest, authToken);
+        communicator.sendPostRequest("/session", jsonRequest, authToken);
         assert authToken == null;
     }
 
-    public void listGames() {}
+    public ListGamesResult listGames(String authToken) {
+        String jsonResponse = communicator.sendGetRequest("/game", authToken);
 
-    public CreateGameResult createGame(String authToken, String gameName) {
+        if (jsonResponse.contains("message")) {
+            throw new RuntimeException(jsonResponse);
+        }
+
+        return serializer.fromJson(jsonResponse, ListGamesResult.class);
+    }
+
+    public void createGame(String authToken, String gameName) {
         CreateGameRequest request = new CreateGameRequest(gameName);
         String jsonRequest = serializer.toJson(request);
 
-        String jsonResponse = communicator.sendRequest("/game", jsonRequest, authToken);
+        String jsonResponse = communicator.sendPostRequest("/game", jsonRequest, authToken);
         if (jsonResponse.contains("message")) {
             String message;
             if (jsonResponse.contains("unauthorized")) {
@@ -70,10 +78,24 @@ public class ServerFacade {
             throw new RuntimeException(message);
         }
 
-        return serializer.fromJson(jsonResponse, CreateGameResult.class);
+        serializer.fromJson(jsonResponse, CreateGameResult.class);
     }
 
-    public void joinGame() {}
+    public void joinGame(String authToken, int gameNum, String playerColor) {
+        JoinGameRequest request = new JoinGameRequest(playerColor, gameNum);
+        String jsonRequest = serializer.toJson(request);
+
+        String jsonResponse = communicator.sendPutRequest("/game", jsonRequest, authToken);
+        if (jsonResponse.contains("message")) {
+            String message;
+            if (jsonResponse.contains("already taken")) {
+                message = "player slot already taken.";
+            } else {
+                message = "please enter a valid game number and player color";
+            }
+            throw new RuntimeException(message);
+        }
+    }
 
     public void clearApplication() {}
 
