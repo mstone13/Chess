@@ -89,4 +89,24 @@ public class ClientCommunicator {
         }
     }
 
+    public String sendDeleteRequest(String endpoint) {
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(serverUrl + endpoint))
+                    .header("Content-Type", "application/json");
+
+            HttpRequest request = builder.DELETE().build();
+
+            HttpResponse<String> response = client.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            return response.body();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to clear application: " + e.getMessage());
+        }
+    }
+
 }

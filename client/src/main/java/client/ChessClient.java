@@ -5,6 +5,7 @@ import facade.ServerFacade;
 import model.*;
 import ui.ChessBoard;
 
+import java.awt.*;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
@@ -45,7 +46,7 @@ public class ChessClient {
                 case "4" -> createGame(out);
                 case "5" -> listGames(out);
                 case "6" -> joinGame(out);
-//                case "7" -> observeGame();
+                case "7" -> observeGame(out);
             }
         } else {
             switch (result) {
@@ -153,7 +154,20 @@ public class ChessClient {
             out.println("Failed to join game: " + e.getMessage());
         }
 
+    }
 
+    public void observeGame(PrintStream out) {
+        try {
+            out.println("Input game number: ");
+            int gameNum = Integer.parseInt(scanner.nextLine());
+
+            ListGamesResult result = facade.listGames(authToken);
+
+            ChessBoard.run(); //again, edit chessboard to match the specific game
+
+        } catch (Exception e) {
+            out.println("Failed to observe game: " + e.getMessage());
+        }
     }
 
     public void printHelp(PrintStream out){

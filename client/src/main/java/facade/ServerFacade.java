@@ -97,7 +97,10 @@ public class ServerFacade {
         }
     }
 
-    public void clearApplication() {}
+    public void clearApplication() {
+        communicator.sendDeleteRequest("/db");
+
+    }
 
 
 }
