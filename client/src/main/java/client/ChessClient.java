@@ -12,6 +12,8 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+import static ui.EscapeSequences.*;
+
 public class ChessClient {
     private static boolean signedIn = false;
     private String authToken = null;
@@ -26,7 +28,9 @@ public class ChessClient {
     public void run() {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
+        out.print(SET_TEXT_BOLD);
         out.println("Welcome to the 240 Chess Menu!");
+        out.print(RESET_TEXT_BOLD_FAINT);
         var result = "";
 
         while (!result.equals("2")) {
@@ -67,6 +71,7 @@ public class ChessClient {
 
     public UserResult login(PrintStream out) {
         try {
+            out.print(SET_TEXT_BOLD);
             out.println("Input username: ");
             String username = scanner.nextLine();
 
@@ -75,6 +80,7 @@ public class ChessClient {
 
             UserResult result = facade.login(username, password);
             out.println("Welcome " + result.username + "!!");
+            out.print(RESET_TEXT_BOLD_FAINT);
             return result;
         } catch (Exception e) {
             out.println("Login failed: " + e.getMessage());
@@ -84,6 +90,7 @@ public class ChessClient {
 
     public void register(PrintStream out) {
         try {
+            out.print(SET_TEXT_BOLD);
             out.println("Input username: ");
             String username = scanner.nextLine();
 
@@ -94,7 +101,9 @@ public class ChessClient {
             String email = scanner.nextLine();
 
             UserResult result = facade.register(username, password, email);
+            out.print(SET_TEXT_BOLD);
             out.println("Hello there, " + result.username);
+            out.print(RESET_TEXT_BOLD_FAINT);
         } catch (Exception e){
             out.println("Registration failed: " + e.getMessage());
         }
@@ -105,7 +114,9 @@ public class ChessClient {
            facade.logout(authToken);
            this.authToken = null;
            signedIn = false;
+           out.print(SET_TEXT_BOLD);
            out.println("Logged out successfully.");
+           out.print(RESET_TEXT_BOLD_FAINT);
        } catch (Exception e) {
            throw new RuntimeException("Failed to log out: " + e.getMessage());
        }
@@ -113,10 +124,12 @@ public class ChessClient {
 
     public void createGame(PrintStream out) {
         try {
+            out.print(SET_TEXT_BOLD);
             out.println("Input game name: ");
             String gameName = scanner.nextLine();
             facade.createGame(authToken, gameName);
             out.println("Game '" + gameName + "' created successfully.");
+            out.print(RESET_TEXT_BOLD_FAINT);
         } catch (Exception e) {
             out.println("Failed to create game: " + e.getMessage());
         }
@@ -124,12 +137,19 @@ public class ChessClient {
 
     public void listGames(PrintStream out) {
         try {
+            out.print(SET_TEXT_BOLD);
             ListGamesResult result = facade.listGames(authToken);
             int counter = 1;
-            for (GameData game : result.games()) {
-                out.println(counter + ": " + game.gameName());
-                counter++;
+            if (result.games().isEmpty()) {
+                out.println("Looks like no games have been created. Go ahead and create a game!");
+            } else {
+                out.println("CURRENT CHESS GAMES:");
+                for (GameData game : result.games()) {
+                    out.println(counter + ": " + game.gameName());
+                    counter++;
+                }
             }
+            out.print(RESET_TEXT_BOLD_FAINT);
 
         } catch (Exception e) {
             out.println("Failed to list games: " + e.getMessage());
@@ -138,6 +158,7 @@ public class ChessClient {
 
     public void joinGame(PrintStream out) {
         try {
+            out.print(SET_TEXT_BOLD);
             out.println("Input game number: ");
             int gameNum = Integer.parseInt(scanner.nextLine());
 
@@ -155,7 +176,7 @@ public class ChessClient {
             }
 
             facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
-
+            out.print(RESET_TEXT_BOLD_FAINT);
             HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
             GameData game = orderedGames.get(gameNum);
             ChessBoard.run(game, playerColor.toUpperCase()); //edit chessBoard to flip depending on the player color
@@ -168,11 +189,14 @@ public class ChessClient {
 
     public void observeGame(PrintStream out) {
         try {
+            out.print(SET_TEXT_BOLD);
             out.println("Input game number: ");
             int gameNum = Integer.parseInt(scanner.nextLine());
 
             HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
             GameData game = orderedGames.get(gameNum);
+            out.print(RESET_TEXT_BOLD_FAINT);
+
             ChessBoard.run(game, null); //again, edit chessboard to match the specific game
 
         } catch (Exception e) {

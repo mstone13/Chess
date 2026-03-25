@@ -19,15 +19,15 @@ public class ChessBoard {
     }
 
     private static void drawChessBoard(PrintStream out, GameData game, String playerColor) {
-        out.println();
+        out.println(SET_TEXT_BOLD);
         out.println("GAME: " + game.gameName());
         out.println("White Player: " + game.whiteUsername());
         out.println("Black Player: " + game.blackUsername());
+        out.print(RESET_TEXT_BOLD_FAINT);
 
         drawHeaders(out, playerColor);
         String[] upperPieces = {" R ", " N ", " B ", " K ", " Q ", " B ", " N ", " R "};
 
-        // PRINT BLACK PIECES
         placeUpperPieces(out, upperPieces, playerColor);
 
         if (playerColor.equalsIgnoreCase("black")) {
@@ -60,8 +60,6 @@ public class ChessBoard {
             }
         }
 
-
-        // PRINT WHITE PIECES
         placeLowerPieces(out, upperPieces, playerColor);
         drawHeaders(out, playerColor);
     }
