@@ -137,7 +137,7 @@ public class ChessClient {
 
     public void listGames(PrintStream out) {
         try {
-            out.print(SET_TEXT_BOLD);
+            out.println(SET_TEXT_BOLD);
             ListGamesResult result = facade.listGames(authToken);
             int counter = 1;
             if (result.games().isEmpty()) {
@@ -158,9 +158,20 @@ public class ChessClient {
 
     public void joinGame(PrintStream out) {
         try {
+            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
+
             out.print(SET_TEXT_BOLD);
-            out.println("Input game number: ");
-            int gameNum = Integer.parseInt(scanner.nextLine());
+            int gameNum;
+            while (true) {
+                out.println("Input game number: ");
+                gameNum = Integer.parseInt(scanner.nextLine());
+
+                if (gameNum < 0 || gameNum > orderedGames.size()) {
+                   out.println("Please input a valid game number.");
+                } else {
+                    break;
+                }
+            }
 
             String playerColor;
             while (true) {
@@ -176,28 +187,45 @@ public class ChessClient {
             }
 
             facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
+            orderedGames = orderedGameList(facade.listGames(authToken).games());
+
             out.print(RESET_TEXT_BOLD_FAINT);
-            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
             GameData game = orderedGames.get(gameNum);
-            ChessBoard.run(game, playerColor.toUpperCase()); //edit chessBoard to flip depending on the player color
+            ChessBoard.run(game, playerColor.toUpperCase());
 
         } catch (Exception e) {
-            out.println("Failed to join game: " + e.getMessage());
+            if (e.getMessage().contains("input")){
+                String message = "please enter a valid game number and player color.";
+                out.println("Failed to join game: " + message);
+            } else {
+                out.println("Failed to join game: " + e.getMessage());
+            }
         }
 
     }
 
     public void observeGame(PrintStream out) {
         try {
-            out.print(SET_TEXT_BOLD);
-            out.println("Input game number: ");
-            int gameNum = Integer.parseInt(scanner.nextLine());
-
             HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
+
+            out.print(SET_TEXT_BOLD);
+
+            int gameNum;
+            while (true) {
+                out.println("Input game number: ");
+                gameNum = Integer.parseInt(scanner.nextLine());
+
+                if (gameNum < 0 || gameNum > orderedGames.size()) {
+                    out.println("Please input a valid game number.");
+                } else {
+                    break;
+                }
+            }
+
             GameData game = orderedGames.get(gameNum);
             out.print(RESET_TEXT_BOLD_FAINT);
 
-            ChessBoard.run(game, null); //again, edit chessboard to match the specific game
+            ChessBoard.run(game, null);
 
         } catch (Exception e) {
             out.println("Failed to observe game: " + e.getMessage());
@@ -217,9 +245,9 @@ public class ChessClient {
 
     public void printHelp(PrintStream out){
         // print help statements
-        out.print(SET_TEXT_BOLD);
+        out.println(SET_TEXT_BOLD);
         if (signedIn) {
-            out.println("""
+            out.print("""
                     Quit: Exit the program.
                     Logout: Return to sign-in menu.
                     Create Game: Start new game. Simply input a game name!
@@ -229,7 +257,7 @@ public class ChessClient {
                     Observe Game: Observe an existing game. Input a game number.
                     """);
         } else {
-            out.println("""
+            out.print("""
                     Quit: Exit the program.
                     Login: Sign into your existing user. Input your username and password.
                     Register: Create a new user. Input a username, password, and email.
@@ -239,6 +267,7 @@ public class ChessClient {
     }
 
     public void printMenu(PrintStream out) {
+        out.println();
         if (signedIn) {
             out.print("""
             >> 1. Help

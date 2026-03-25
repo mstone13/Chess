@@ -151,26 +151,35 @@ public class ServerFacadeTests {
     void joinGamePositive() {
         facade.register("Eva", "Stratt", "boss@gmail.com");
         UserResult result = facade.login("Eva", "Stratt");
+        String authToken = result.authToken;
 
-        facade.createGame(result.authToken, "Hail Mary Chess");
+        facade.createGame(authToken, "Hail Mary Chess");
+        ListGamesResult listGamesResult = facade.listGames(authToken);
+        GameData game = listGamesResult.games().getFirst();
+        assertEquals("Hail Mary Chess", game.gameName());
+
 
         assertDoesNotThrow(() ->
-            facade.joinGame(result.authToken, 1, "BLACK")
+            facade.joinGame(authToken, 1, "BLACK")
         );
+
+        assertEquals("Eva", game.blackUsername());
     }
 
     @Test
     void joinGameNegative() {
         facade.register("Eva", "Stratt", "boss@gmail.com");
         UserResult result = facade.login("Eva", "Stratt");
-        facade.createGame(result.authToken, "Great Game!");
+        String authToken = result.authToken;
+
+        facade.createGame(authToken, "Great Game!");
 
         assertThrows(RuntimeException.class, () ->
-           facade.joinGame(result.authToken, 150, "WHITE")
+           facade.joinGame(authToken, 150, "WHITE")
         );
 
         assertThrows(RuntimeException.class, () ->
-           facade.joinGame(result.authToken, 1, "RED")
+           facade.joinGame(authToken, 1, "RED")
         );
     }
 

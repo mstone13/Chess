@@ -103,7 +103,7 @@ public class ServerFacade {
             if (jsonResponse.contains("already taken")) {
                 message = "player slot already taken.";
             } else {
-                message = "please enter a valid game number and player color";
+                message = "please enter a valid game number and player color.";
             }
             throw new RuntimeException(message);
         }
