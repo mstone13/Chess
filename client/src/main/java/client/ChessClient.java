@@ -158,20 +158,9 @@ public class ChessClient {
 
     public void joinGame(PrintStream out) {
         try {
-            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
-
             out.print(SET_TEXT_BOLD);
-            int gameNum;
-            while (true) {
-                out.println("Input game number: ");
-                gameNum = Integer.parseInt(scanner.nextLine());
-
-                if (gameNum < 0 || gameNum > orderedGames.size()) {
-                   out.println("Please input a valid game number.");
-                } else {
-                    break;
-                }
-            }
+            out.println("Input game number: ");
+            int gameNum = Integer.parseInt(scanner.nextLine());
 
             String playerColor;
             while (true) {
@@ -187,7 +176,7 @@ public class ChessClient {
             }
 
             facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
-            orderedGames = orderedGameList(facade.listGames(authToken).games());
+            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
 
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
@@ -201,8 +190,37 @@ public class ChessClient {
                 out.println("Failed to join game: " + e.getMessage());
             }
         }
-
     }
+
+//    public void joinGame(PrintStream out) {
+//        try {
+//            out.println("Input game number: ");
+//            int gameNum = Integer.parseInt(scanner.nextLine());
+//
+//            String playerColor;
+//            while (true) {
+//                out.println("Input player color (black or white):");
+//                playerColor = scanner.nextLine();
+//
+//                if (playerColor.equalsIgnoreCase("white")
+//                        || playerColor.equalsIgnoreCase("black")) {
+//                    break;
+//                } else {
+//                    out.println("Please input a valid chess player color.");
+//                }
+//            }
+//
+//            facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
+//
+//            HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
+//            GameData game = orderedGames.get(gameNum);
+//            ChessBoard.run(game, playerColor.toUpperCase()); //edit chessBoard to flip depending on the player color
+//
+//        } catch (Exception e) {
+//            out.println("Failed to join game: " + e.getMessage());
+//        }
+//
+//    }
 
     public void observeGame(PrintStream out) {
         try {

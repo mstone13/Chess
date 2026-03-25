@@ -39,9 +39,9 @@ public class ChessBoard {
                 setLightBlue(out);
                 out.print(" " + row + " ");
                 if (row % 2 == 0) {
-                    drawLineBlackFirst(out);
+                    drawLine(out, "black");
                 } else {
-                    drawLineWhiteFirst(out);
+                    drawLine(out, "white");
                 }
                 setLightBlue(out);
                 out.print(" " + row + " ");
@@ -53,9 +53,9 @@ public class ChessBoard {
                 setLightBlue(out);
                 out.print(" " + row + " ");
                 if (row % 2 == 0) {
-                    drawLineWhiteFirst(out);
+                    drawLine(out,"white");
                 } else {
-                    drawLineBlackFirst(out);
+                    drawLine(out, "black");
                 }
                 setLightBlue(out);
                 out.print(" " + row + " ");
@@ -93,23 +93,23 @@ public class ChessBoard {
         setGrey(out);
     }
 
-    private static void drawLineWhiteFirst(PrintStream out) {
-        for (int col = 0; col < 8; col++) {
-            if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_WHITE);
-            } else {
-                out.print(SET_BG_COLOR_PINK);
-            }
-            out.print(EMPTY);
-        }
-    }
+    private static void drawLine(PrintStream out, String startingColor) {
+        String firstColor;
+        String secondColor;
 
-    private static void drawLineBlackFirst(PrintStream out) {
+        if (startingColor.equals("black")) {
+            firstColor = SET_BG_COLOR_PINK;
+            secondColor = SET_BG_COLOR_WHITE;
+        } else {
+            firstColor = SET_BG_COLOR_WHITE;
+            secondColor = SET_BG_COLOR_PINK;
+        }
+
         for (int col = 0; col < 8; col++) {
             if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_PINK);
+                out.print(firstColor);
             } else {
-                out.print(SET_BG_COLOR_WHITE);
+                out.print(secondColor);
             }
             out.print(EMPTY);
         }
