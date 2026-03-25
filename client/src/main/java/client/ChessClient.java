@@ -101,11 +101,14 @@ public class ChessClient {
     }
 
     public void logout(PrintStream out) {
-        facade.logout(authToken);
-        this.authToken = null;
-        signedIn = false;
-
-        out.println("Logged out successfully.");
+       try {
+           facade.logout(authToken);
+           this.authToken = null;
+           signedIn = false;
+           out.println("Logged out successfully.");
+       } catch (Exception e) {
+           throw new RuntimeException("Failed to log out: " + e.getMessage());
+       }
     }
 
     public void createGame(PrintStream out) {
@@ -155,7 +158,7 @@ public class ChessClient {
 
             HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
             GameData game = orderedGames.get(gameNum);
-            ChessBoard.run(game); //edit chessBoard to flip depending on the player color
+            ChessBoard.run(game, playerColor.toUpperCase()); //edit chessBoard to flip depending on the player color
 
         } catch (Exception e) {
             out.println("Failed to join game: " + e.getMessage());
@@ -170,7 +173,7 @@ public class ChessClient {
 
             HashMap<Integer, GameData> orderedGames = orderedGameList(facade.listGames(authToken).games());
             GameData game = orderedGames.get(gameNum);
-            ChessBoard.run(game); //again, edit chessboard to match the specific game
+            ChessBoard.run(game, null); //again, edit chessboard to match the specific game
 
         } catch (Exception e) {
             out.println("Failed to observe game: " + e.getMessage());
@@ -182,6 +185,7 @@ public class ChessClient {
         int counter = 1;
         for (GameData game : games){
             orderedGames.put(counter, game);
+            counter++;
         }
 
         return orderedGames;

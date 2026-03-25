@@ -10,54 +10,77 @@ import static ui.EscapeSequences.*;
 public class ChessBoard {
     private static final String EMPTY = "   ";
 
-    public static void run(GameData game) {
+    public static void run(GameData game, String playerColor) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
-        drawChessBoard(out, game);
-
+        drawChessBoard(out, game, playerColor);
         out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_WHITE);
-
     }
 
-    private static void drawChessBoard(PrintStream out, GameData game) {
+    private static void drawChessBoard(PrintStream out, GameData game, String playerColor) {
         out.println();
+        out.println("GAME: " + game.gameName());
         out.println("White Player: " + game.whiteUsername());
         out.println("Black Player: " + game.blackUsername());
 
-        drawHeaders(out);
+        drawHeaders(out, playerColor);
         String[] upperPieces = {" R ", " N ", " B ", " K ", " Q ", " B ", " N ", " R "};
 
         // PRINT BLACK PIECES
-        placeBlackPieces(out, upperPieces);
+        placeUpperPieces(out, upperPieces, playerColor);
 
-        for (int row = 6; row > 2; row--) {
-            setLightBlue(out);
-            out.print(" " + row + " ");
-            if (row % 2 == 0) {
-                drawLineWhiteFirst(out);
-            } else {
-                drawLineBlackFirst(out);
+        if (playerColor.equalsIgnoreCase("black")) {
+            for (int row = 3; row < 7; row++) {
+                setLightBlue(out);
+                out.print(" " + row + " ");
+                if (row % 2 == 0) {
+                    drawLineBlackFirst(out);
+                } else {
+                    drawLineWhiteFirst(out);
+                }
+                setLightBlue(out);
+                out.print(" " + row + " ");
+
+                newLine(out);
             }
-            setLightBlue(out);
-            out.print(" " + row + " ");
+        } else {
+            for (int row = 6; row > 2; row--) {
+                setLightBlue(out);
+                out.print(" " + row + " ");
+                if (row % 2 == 0) {
+                    drawLineWhiteFirst(out);
+                } else {
+                    drawLineBlackFirst(out);
+                }
+                setLightBlue(out);
+                out.print(" " + row + " ");
 
-            newLine(out);
+                newLine(out);
+            }
         }
 
-       // PRINT WHITE PIECES
-        placeWhitePieces(out, upperPieces);
-        drawHeaders(out);
+
+        // PRINT WHITE PIECES
+        placeLowerPieces(out, upperPieces, playerColor);
+        drawHeaders(out, playerColor);
     }
 
-    private static void drawHeaders(PrintStream out) {
+    private static void drawHeaders(PrintStream out, String playerColor) {
         setGrey(out);
 
         String[] headers = {" h "," g "," f "," e "," d ", " c ", " b ", " a "};
         out.print(EMPTY);
-        for (String header : headers) {
-            printHeaderText(out, header);
+        if (playerColor.equalsIgnoreCase("black")) {
+            for (int i = headers.length - 1; i >= 0; i--) {
+                printHeaderText(out, headers[i]);
+            }
+        } else {
+            for (String header : headers) {
+                printHeaderText(out, header);
+            }
         }
+
         out.print(EMPTY);
         out.println();
     }
@@ -90,85 +113,112 @@ public class ChessBoard {
         }
     }
 
-    private static void placeBlackPieces(PrintStream out, String[] pieces) {
+    private static void placeLowerPieces(PrintStream out, String[] pieces, String playerColor) {
         setLightBlue(out);
-        out.print(" 8 ");
-        int col = 0;
-        for (String piece : pieces) {
-            if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_WHITE);
-                out.print(SET_TEXT_COLOR_BLUE);
-                out.print(piece);
-            } else {
-                out.print(SET_BG_COLOR_PINK);
-                out.print(SET_TEXT_COLOR_BLUE);
-                out.print(piece);
-            }
-            col++;
-        }
-        setLightBlue(out);
-        out.print(" 8 ");
-        col = 0;
-        newLine(out);
+        String color;
+        String lastRow;
+        String pawnRow;
 
-        out.print(" 7 ");
+        if (playerColor.equalsIgnoreCase("black")) {
+            color = SET_TEXT_COLOR_BLUE;
+            lastRow = " 8 ";
+            pawnRow = " 7 ";
+        } else {
+            color = SET_TEXT_COLOR_RED;
+            lastRow = " 1 ";
+            pawnRow = " 2 ";
+        }
+
+        out.print(pawnRow);
+        int col = 0;
+
         while (col < 8) {
             if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_PINK);
-                out.print(SET_TEXT_COLOR_BLUE);
-            } else {
                 out.print(SET_BG_COLOR_WHITE);
-                out.print(SET_TEXT_COLOR_BLUE);
+                out.print(color);
+            } else {
+                out.print(SET_BG_COLOR_PINK);
+                out.print(color);
             }
             out.print(" P ");
             col++;
         }
         setLightBlue(out);
-        out.print(" 7 ");
+        out.print(pawnRow);
+        col = 0;
         newLine(out);
 
+        out.print(lastRow);
+        for (String piece : pieces) {
+            if (col % 2 == 0) {
+                out.print(SET_BG_COLOR_PINK);
+                out.print(color);
+                out.print(piece);
+            } else {
+                out.print(SET_BG_COLOR_WHITE);
+                out.print(color);
+                out.print(piece);
+            }
+            col++;
+        }
+
+        setLightBlue(out);
+        out.print(lastRow);
+
+        newLine(out);
     }
 
-    private static void placeWhitePieces(PrintStream out, String[] pieces) {
-        setLightBlue(out);
-        out.print(" 2 ");
-        int col = 0;
+    private static void placeUpperPieces(PrintStream out, String[] pieces, String playerColor) {
+        String color;
+        String topRow;
+        String pawnRow;
 
-        while (col < 8) {
+        setLightBlue(out);
+
+        if (playerColor.equalsIgnoreCase("black")) {
+            color = SET_TEXT_COLOR_RED;
+            topRow = " 1 ";
+            pawnRow = " 2 ";
+        } else {
+            color = SET_TEXT_COLOR_BLUE;
+            topRow = " 8 ";
+            pawnRow = " 7 ";
+        }
+
+        out.print(topRow);
+        int col = 0;
+        for (String piece : pieces) {
             if (col % 2 == 0) {
                 out.print(SET_BG_COLOR_WHITE);
-                out.print(SET_TEXT_COLOR_RED);
+                out.print(color);
+                out.print(piece);
             } else {
                 out.print(SET_BG_COLOR_PINK);
-                out.print(SET_TEXT_COLOR_RED);
+                out.print(color);
+                out.print(piece);
+            }
+            col++;
+        }
+        setLightBlue(out);
+        out.print(topRow);
+        col = 0;
+        newLine(out);
+
+        out.print(pawnRow);
+        while (col < 8) {
+            if (col % 2 == 0) {
+                out.print(SET_BG_COLOR_PINK);
+                out.print(color);
+            } else {
+                out.print(SET_BG_COLOR_WHITE);
+                out.print(color);
             }
             out.print(" P ");
             col++;
         }
         setLightBlue(out);
-        out.print(" 2 ");
-        col = 0;
+        out.print(pawnRow);
         newLine(out);
-
-        out.print(" 1 ");
-        for (String piece : pieces) {
-            if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_PINK);
-                out.print(SET_TEXT_COLOR_RED);
-                out.print(piece);
-            } else {
-                out.print(SET_BG_COLOR_WHITE);
-                out.print(SET_TEXT_COLOR_RED);
-                out.print(piece);
-            }
-            col++;
-        }
-
-        setLightBlue(out);
-        out.print(" 1 ");
-
-        newLine(out);
-
     }
 
     private static void newLine(PrintStream out) {

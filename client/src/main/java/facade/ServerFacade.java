@@ -48,16 +48,30 @@ public class ServerFacade {
     }
 
     public void logout(String authToken) {
-        String jsonRequest = serializer.toJson(authToken);
-        communicator.sendPostRequest("/session", jsonRequest, authToken);
-        assert authToken == null;
+        String jsonResponse = communicator.sendDeleteRequest("/session", authToken);
+
+        if (jsonResponse.contains("message")) {
+            String message;
+            if (jsonResponse.contains("unauthorized")) {
+                message = "please log in in order to log out.";
+            } else {
+                message = jsonResponse;
+            }
+            throw new RuntimeException(message);
+        }
     }
 
     public ListGamesResult listGames(String authToken) {
         String jsonResponse = communicator.sendGetRequest("/game", authToken);
 
         if (jsonResponse.contains("message")) {
-            throw new RuntimeException(jsonResponse);
+            String message;
+            if (jsonResponse.contains("unauthorized")) {
+                message = "you must log in to see the list of games!";
+            } else {
+                message = jsonResponse;
+            }
+            throw new RuntimeException(message);
         }
 
         return serializer.fromJson(jsonResponse, ListGamesResult.class);
@@ -77,8 +91,6 @@ public class ServerFacade {
             }
             throw new RuntimeException(message);
         }
-
-        serializer.fromJson(jsonResponse, CreateGameResult.class);
     }
 
     public void joinGame(String authToken, int gameNum, String playerColor) {
@@ -98,7 +110,7 @@ public class ServerFacade {
     }
 
     public void clearApplication() {
-        communicator.sendDeleteRequest("/db");
+        communicator.sendDeleteRequest("/db", null);
     }
 
 

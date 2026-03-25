@@ -1,12 +1,11 @@
 package client;
 
-import dataaccess.DataAccessException;
 import model.*;
 import org.junit.jupiter.api.*;
 import server.Server;
 import facade.ServerFacade;
-import static org.junit.jupiter.api.Assertions.*;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ServerFacadeTests {
 
@@ -22,7 +21,10 @@ public class ServerFacadeTests {
         facade = new ServerFacade(
                 new communicator.ClientCommunicator("http://localhost:" + port)
         );
+    }
 
+    @BeforeEach
+    public void clear() {
         facade.clearApplication();
     }
 
@@ -33,23 +35,23 @@ public class ServerFacadeTests {
 
 
     @Test
-    void registerPositive() throws Exception {
+    void registerPositive() {
         UserResult result = facade.register("player1", "password", "p1@email.com");
         assertTrue(result.authToken.length() > 10);
         assertEquals("player1", result.username);
     }
 
     @Test
-    void registerNegative() throws Exception {
+    void registerNegative(){
         facade.register("newUser", "newPass", "email.com");
 
-        assertThrows(Exception.class, () -> {
-            facade.register("newUser", "diffPass", "email2.com");
-        });
+        assertThrows(Exception.class, () ->
+                facade.register("newUser", "diffPass", "email2.com")
+        );
     }
 
     @Test
-    void loginPositive() throws Exception {
+    void loginPositive() {
         facade.register("user1", "pass1", "email@gmail.com");
         UserResult result = facade.login("user1", "pass1");
 
@@ -58,35 +60,130 @@ public class ServerFacadeTests {
     }
 
     @Test
-    void loginNegative() throws Exception {
-        assertThrows(Exception.class, () -> {
-            facade.login("fakeUser", "fakePass");
-        });
+    void loginNegative() {
+        assertThrows(Exception.class, () ->
+            facade.login("fakeUser", "fakePass")
+        );
     }
 
     @Test
-    void loginNegativeEmptyParams() throws Exception {
+    void loginNegativeEmptyParams() {
         facade.register("username", "password", "email.com");
 
-        assertThrows(Exception.class, () -> {
-           facade.login("", "password");
-        });
+        assertThrows(Exception.class, () ->
+           facade.login("", "password")
+        );
 
-        assertThrows(RuntimeException.class, () -> {
-           facade.login("username", "");
-        });
+        assertThrows(RuntimeException.class, () ->
+           facade.login("username", "")
+        );
     }
 
     @Test
-    void clearApplication() throws Exception {
+    void logoutPositive() {
+        facade.register("username", "password", "g@gmail.com");
+        UserResult loginResult = facade.login("username", "password");
+        assertNotNull(loginResult.authToken);
+
+        assertDoesNotThrow(() ->
+            facade.logout(loginResult.authToken)
+        );
+    }
+
+    @Test
+    void logoutNegative() {
+        assertThrows(RuntimeException.class, () ->
+            facade.logout("fake authToken")
+        );
+    }
+
+    @Test
+    void listGamesPositive() {
+        facade.register("List Games", "Attempt1234", "list@gmail.com");
+        UserResult loginResult = facade.login("List Games", "Attempt1234");
+        String authToken = loginResult.authToken;
+
+        ListGamesResult resultNoGames = facade.listGames(authToken);
+        assertTrue(resultNoGames.games().isEmpty());
+
+        facade.createGame(authToken, "First Game");
+        ListGamesResult finalResult = facade.listGames(authToken);
+        assertFalse(finalResult.games().isEmpty());
+        assertEquals(1, finalResult.games().size());
+    }
+
+    @Test
+    void listGamesNegative() {
+        facade.register("List Games", "Attempt1234", "list@gmail.com");
+        facade.login("List Games", "Attempt1234");
+
+        assertThrows(RuntimeException.class, () ->
+            facade.listGames("fake authToken")
+        );
+    }
+
+    @Test
+    void createGamePositive() {
+        facade.register("Ryland", "Grace", "eridani@gmail.com");
+        UserResult result = facade.login("Ryland", "Grace");
+        String authToken = result.authToken;
+
+        assertDoesNotThrow(() ->
+            facade.createGame(authToken, "Rocky Love Games!")
+        );
+    }
+
+    @Test
+    void createGameNegative() {
+        facade.register("Ryland", "Grace", "eridani@gmail.com");
+        facade.login("Ryland", "Grace");
+
+        assertThrows(RuntimeException.class, () ->
+            facade.createGame("another fake!", "This is a fake game.")
+        );
+
+        assertThrows(RuntimeException.class, () ->
+           facade.createGame("", "Not fake, but no auth")
+        );
+    }
+
+    @Test
+    void joinGamePositive() {
+        facade.register("Eva", "Stratt", "boss@gmail.com");
+        UserResult result = facade.login("Eva", "Stratt");
+
+        facade.createGame(result.authToken, "Hail Mary Chess");
+
+        assertDoesNotThrow(() ->
+            facade.joinGame(result.authToken, 1, "BLACK")
+        );
+    }
+
+    @Test
+    void joinGameNegative() {
+        facade.register("Eva", "Stratt", "boss@gmail.com");
+        UserResult result = facade.login("Eva", "Stratt");
+        facade.createGame(result.authToken, "Great Game!");
+
+        assertThrows(RuntimeException.class, () ->
+           facade.joinGame(result.authToken, 150, "WHITE")
+        );
+
+        assertThrows(RuntimeException.class, () ->
+           facade.joinGame(result.authToken, 1, "RED")
+        );
+    }
+
+    @Test
+    void clearApplication() {
         facade.register("Grace", "Rocky", "mary@gmail.com");
         facade.login("Grace", "Rocky");
 
         facade.clearApplication();
 
-        assertThrows(RuntimeException.class, () -> {
-           facade.login("Grace", "Rocky");
-        });
+        assertThrows(RuntimeException.class, () ->
+           facade.login("Grace", "Rocky")
+        );
      }
 
 }
