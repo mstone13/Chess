@@ -37,7 +37,7 @@ public class ServerFacade {
         if (jsonResponse.contains("message")) {
             String message;
             if (jsonResponse.contains("unauthorized")) {
-                message = "incorrect username or password. Try again";
+                message = "incorrect username or password. Try again.";
             } else {
                 message = "please enter a valid username and password.";
             }

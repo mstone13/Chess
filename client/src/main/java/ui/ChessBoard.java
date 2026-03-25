@@ -13,14 +13,18 @@ public class ChessBoard {
     public static void run(GameData game, String playerColor) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
+        if (playerColor == null) {
+            playerColor = "WHITE";
+        }
         drawChessBoard(out, game, playerColor);
         out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 
     private static void drawChessBoard(PrintStream out, GameData game, String playerColor) {
-        out.println(SET_TEXT_BOLD);
+        out.println(SET_TEXT_BOLD + SET_TEXT_UNDERLINE);
         out.println("GAME: " + game.gameName());
+        out.print(RESET_TEXT_UNDERLINE);
         out.println("White Player: " + game.whiteUsername());
         out.println("Black Player: " + game.blackUsername());
         out.print(RESET_TEXT_BOLD_FAINT);
@@ -232,7 +236,7 @@ public class ChessBoard {
     }
 
     private static void setGrey(PrintStream out) {
-        out.print(SET_BG_COLOR_DARK_GREY);
+        out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_BLACK);
     }
 

@@ -217,26 +217,28 @@ public class ChessClient {
 
     public void printHelp(PrintStream out){
         // print help statements
+        out.print(SET_TEXT_BOLD);
         if (signedIn) {
             out.println("""
-                    Quit: Exit the program
-                    Logout: Return to sign-in menu
-                    Create Game: Start new game
-                    List Games: See a list of all created games
-                    Play Game: Join and play an existing game
-                    Observe Game: Join and observe an existing game
+                    Quit: Exit the program.
+                    Logout: Return to sign-in menu.
+                    Create Game: Start new game. Simply input a game name!
+                    List Games: See a list of all created games.
+                    Play Game: Join and play an existing game. Input game number and choose a player color
+                    (see list of games to find appropriate game number).
+                    Observe Game: Observe an existing game. Input a game number.
                     """);
         } else {
             out.println("""
-                    Quit: Exit the program
-                    Login: Sign into your existing user
-                    Register: Create a new user
+                    Quit: Exit the program.
+                    Login: Sign into your existing user. Input your username and password.
+                    Register: Create a new user. Input a username, password, and email.
                     """);
         }
+        out.print(RESET_TEXT_BOLD_FAINT);
     }
 
     public void printMenu(PrintStream out) {
-        out.println();
         if (signedIn) {
             out.print("""
             >> 1. Help
