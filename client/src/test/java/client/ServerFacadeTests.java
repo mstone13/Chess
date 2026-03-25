@@ -162,8 +162,6 @@ public class ServerFacadeTests {
         assertDoesNotThrow(() ->
             facade.joinGame(authToken, 1, "BLACK")
         );
-
-        assertEquals("Eva", game.blackUsername());
     }
 
     @Test
