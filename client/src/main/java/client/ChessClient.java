@@ -44,6 +44,7 @@ public class ChessClient {
 
     public void directAction(PrintStream out, String result) {
         UserResult loginResult;
+        UserResult registerResult;
 
         if (signedIn) {
             switch (result) {
@@ -64,7 +65,14 @@ public class ChessClient {
                         signedIn = true;
                     }
                 }
-                case "4" -> register(out);
+                case "4" -> {
+                    registerResult = register(out);
+                    if (registerResult != null) {
+                        authToken = registerResult.authToken;
+                        signedIn = true;
+                    }
+                }
+
             }
         }
     }
@@ -88,7 +96,7 @@ public class ChessClient {
         return null;
     }
 
-    public void register(PrintStream out) {
+    public UserResult register(PrintStream out) {
         try {
             out.print(SET_TEXT_BOLD);
             out.println("Input username: ");
@@ -104,9 +112,11 @@ public class ChessClient {
             out.print(SET_TEXT_BOLD);
             out.println("Hello there, " + result.username);
             out.print(RESET_TEXT_BOLD_FAINT);
+            return result;
         } catch (Exception e){
             out.println("Registration failed: " + e.getMessage());
         }
+        return null;
     }
 
     public void logout(PrintStream out) {
@@ -145,7 +155,9 @@ public class ChessClient {
             } else {
                 out.println("CURRENT CHESS GAMES:");
                 for (GameData game : result.games()) {
-                    out.println(counter + ": " + game.gameName());
+                    out.print(counter + ": " + game.gameName() + ". ");
+                    out.print("(White player: " + game.whiteUsername() + ", ");
+                    out.println("Black player: " + game.blackUsername() + ")");
                     counter++;
                 }
             }
@@ -201,7 +213,13 @@ public class ChessClient {
             int gameNum;
             while (true) {
                 out.println("Input game number: ");
-                gameNum = Integer.parseInt(scanner.nextLine());
+                try {
+                    gameNum = Integer.parseInt(scanner.nextLine());
+
+                } catch (NumberFormatException e) {
+                    out.println("Failed to observe game: game number must be an integer");
+                    return;
+                }
 
                 if (gameNum < 0 || gameNum > orderedGames.size()) {
                     out.println("Please input a valid game number.");

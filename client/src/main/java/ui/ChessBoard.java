@@ -74,12 +74,12 @@ public class ChessBoard {
         String[] headers = {" h "," g "," f "," e "," d ", " c ", " b ", " a "};
         out.print(EMPTY);
         if (playerColor.equalsIgnoreCase("black")) {
-            for (int i = headers.length - 1; i >= 0; i--) {
-                printHeaderText(out, headers[i]);
-            }
-        } else {
             for (String header : headers) {
                 printHeaderText(out, header);
+            }
+        } else {
+            for (int i = headers.length - 1; i >= 0; i--) {
+                printHeaderText(out, headers[i]);
             }
         }
 
@@ -117,6 +117,8 @@ public class ChessBoard {
 
     private static void placeLowerPieces(PrintStream out, String[] pieces, String playerColor) {
         setLightBlue(out);
+
+        String UpperOrLower = "lower";
         String color;
         String lastRow;
         String pawnRow;
@@ -150,18 +152,18 @@ public class ChessBoard {
         col = 0;
         newLine(out);
 
-        out.print(lastRow);
-        for (String piece : pieces) {
-            if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_PINK);
-                out.print(color);
-                out.print(piece);
-            } else {
-                out.print(SET_BG_COLOR_WHITE);
-                out.print(color);
-                out.print(piece);
+        if (playerColor.equalsIgnoreCase("black")) {
+            out.print(lastRow);
+            for (String piece : pieces) {
+                printPieces(out, color, piece, col, UpperOrLower);
+                col++;
             }
-            col++;
+        } else {
+            out.print(lastRow);
+            for (int i = pieces.length -1; i >= 0; i--) {
+                printPieces(out, color, pieces[i], col, UpperOrLower);
+                col++;
+            }
         }
 
         setLightBlue(out);
@@ -170,10 +172,33 @@ public class ChessBoard {
         newLine(out);
     }
 
+    private static void printPieces(PrintStream out, String color, String piece, int col, String UpperOrLower) {
+        String firstColor;
+        String secondColor;
+        if (UpperOrLower.equals("lower")) {
+            firstColor = SET_BG_COLOR_PINK;
+            secondColor = SET_BG_COLOR_WHITE;
+        } else {
+            firstColor = SET_BG_COLOR_WHITE;
+            secondColor = SET_BG_COLOR_PINK;
+        }
+
+        if (col % 2 == 0) {
+            out.print(firstColor);
+            out.print(color);
+            out.print(piece);
+        } else {
+            out.print(secondColor);
+            out.print(color);
+            out.print(piece);
+        }
+    }
+
     private static void placeUpperPieces(PrintStream out, String[] pieces, String playerColor) {
         String color;
         String topRow;
         String pawnRow;
+        String UpperOrLower = "upper";
 
         setLightBlue(out);
 
@@ -187,19 +212,21 @@ public class ChessBoard {
             pawnRow = " 7 ";
         }
 
-        out.print(topRow);
         int col = 0;
-        for (String piece : pieces) {
-            if (col % 2 == 0) {
-                out.print(SET_BG_COLOR_WHITE);
-                out.print(color);
-                out.print(piece);
-            } else {
-                out.print(SET_BG_COLOR_PINK);
-                out.print(color);
-                out.print(piece);
+        if (playerColor.equalsIgnoreCase("black")) {
+            out.print(topRow);
+            for (String piece : pieces) {
+                printPieces(out, color, piece, col, UpperOrLower);
+                col++;
             }
-            col++;
+        } else {
+
+            out.print(topRow);
+            for (int i = pieces.length -1; i >= 0; i--) {
+                printPieces(out, color, pieces[i], col, UpperOrLower);
+
+                col++;
+            }
         }
         setLightBlue(out);
         out.print(topRow);
