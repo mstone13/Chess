@@ -37,17 +37,25 @@ public class ChessBoard {
 
         drawHeaders(out, playerColor);
 
-        printPieces(out);
+        printPieces(out, playerColor);
 
         drawHeaders(out, playerColor);
     }
 
-    private static void printPieces(PrintStream out) {
-        for (int row = 8; row >= 1; row--) {
+    private static void printPieces(PrintStream out, String playerColor) {
+        boolean isBlack = playerColor.equalsIgnoreCase("black");
+
+        for (int row = isBlack ? 1 : 8;
+             isBlack ? row <= 8 : row >= 1;
+             row += isBlack ? 1 : -1) {
+
             setLightBlue(out);
             out.print(" " + row + " ");
 
-            for (int col = 1; col <= 8; col++) {
+            for (int col = isBlack ? 8 : 1;
+                 isBlack ? col >= 1 : col <= 8;
+                 col += isBlack ? -1 : 1) {
+
                 ChessPosition pos = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(pos);
 

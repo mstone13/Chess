@@ -19,12 +19,12 @@ public class ChessClient {
     private String authToken = null;
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
-//    private ChessBoard ChessBoard;
+    private final GamePlay GamePlay;
 
     public ChessClient() {
         ClientCommunicator communicator = new ClientCommunicator("http://localhost:8080");
         this.facade = new ServerFacade(communicator);
-//        ChessBoard ChessBoard = new ChessBoard();
+        this.GamePlay = new GamePlay();
     }
 
     public void run() {
@@ -195,6 +195,8 @@ public class ChessClient {
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
             ui.ChessBoard.run(game, playerColor.toUpperCase());
+
+            GamePlay.run(game, playerColor);
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
