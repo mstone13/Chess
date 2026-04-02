@@ -19,10 +19,12 @@ public class ChessClient {
     private String authToken = null;
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
+//    private ChessBoard ChessBoard;
 
     public ChessClient() {
         ClientCommunicator communicator = new ClientCommunicator("http://localhost:8080");
         this.facade = new ServerFacade(communicator);
+//        ChessBoard ChessBoard = new ChessBoard();
     }
 
     public void run() {
@@ -192,7 +194,7 @@ public class ChessClient {
 
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
-            ChessBoard.run(game, playerColor.toUpperCase());
+            ui.ChessBoard.run(game, playerColor.toUpperCase());
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -211,21 +213,20 @@ public class ChessClient {
             out.print(SET_TEXT_BOLD);
 
             int gameNum;
-            while (true) {
-                out.println("Input game number: ");
-                try {
-                    gameNum = Integer.parseInt(scanner.nextLine());
+            out.println("Input game number: ");
 
-                } catch (NumberFormatException e) {
-                    out.println("Failed to observe game: game number must be an integer");
-                    return;
-                }
+            try {
+                gameNum = Integer.parseInt(scanner.nextLine());
 
-                if (gameNum < 0 || gameNum > orderedGames.size()) {
-                    out.println("Please input a valid game number.");
-                } else {
-                    break;
-                }
+            } catch (NumberFormatException e) {
+                out.println("Failed to observe game: game number must be an integer");
+                return;
+            } catch (RuntimeException e) {
+                return;
+            }
+
+            if (gameNum < 0 || gameNum > orderedGames.size()) {
+                out.println("Please input a valid game number.");
             }
 
             GameData game = orderedGames.get(gameNum);
@@ -234,7 +235,7 @@ public class ChessClient {
             ChessBoard.run(game, null);
 
         } catch (Exception e) {
-            out.println("Failed to observe game: " + e.getMessage());
+            return;
         }
     }
 

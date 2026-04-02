@@ -15,7 +15,6 @@ public class ChessBoard {
     //create an array (matrix)
     ChessPiece[][] squares = new ChessPiece[8][8];
     public ChessBoard() {
-        
     }
 
     @Override
