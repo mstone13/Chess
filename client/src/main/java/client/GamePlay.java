@@ -1,9 +1,11 @@
 package client;
 
+import chess.*;
 import model.*;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Scanner;
 
 import static ui.EscapeSequences.RESET_TEXT_BOLD_FAINT;
@@ -33,10 +35,25 @@ public class GamePlay {
     public void directAction(PrintStream out, String result, GameData game, String playerColor) {
         switch (result) {
             case "1" -> printHelp(out);
-            case "2" -> ui.ChessBoard.run(game, playerColor.toUpperCase());
+            case "2" -> ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
+            case "6" -> highlightLegalMoves(out, game, playerColor);
         }
     }
 
+    public void highlightLegalMoves(PrintStream out, GameData game, String playerColor) {
+        out.println("Enter the row of a piece [1-8]: ");
+        int row = Integer.parseInt(scanner.nextLine());
+
+        out.println("Enter the column of a piece [a-h]: ");
+        char input = scanner.nextLine().toLowerCase().charAt(0);
+        int col = input - 'a' + 1;
+
+
+        ChessPosition pos = new ChessPosition(row, col);
+        Collection<ChessMove> legalMoves = new ChessGame().validMoves(pos);
+
+        ui.ChessBoard.run(game, playerColor, legalMoves, pos);
+    }
 
     public void printHelp(PrintStream out) {
         out.println(SET_TEXT_BOLD);

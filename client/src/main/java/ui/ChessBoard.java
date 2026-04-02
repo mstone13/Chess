@@ -1,12 +1,14 @@
 package ui;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import model.*;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 
 import static ui.EscapeSequences.*;
 
@@ -14,7 +16,8 @@ public class ChessBoard {
     private static final String EMPTY = "   ";
     private static chess.ChessBoard board;
 
-    public static void run(GameData game, String playerColor) {
+    public static void run(GameData game, String playerColor,
+                           Collection<ChessMove> legalMoves, ChessPosition chosenPos) {
         board = game.game().getBoard();
 
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
@@ -22,12 +25,14 @@ public class ChessBoard {
         if (playerColor == null) {
             playerColor = "WHITE";
         }
-        drawChessBoard(out, game, playerColor);
+        drawChessBoard(out, game, playerColor, legalMoves, chosenPos);
         out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 
-    private static void drawChessBoard(PrintStream out, GameData game, String playerColor) {
+    private static void drawChessBoard(PrintStream out, GameData game,
+                                       String playerColor, Collection<ChessMove> legalMoves,
+                                       ChessPosition chosenPos) {
         out.println(SET_TEXT_BOLD + SET_TEXT_UNDERLINE);
         out.println("GAME: " + game.gameName());
         out.print(RESET_TEXT_UNDERLINE);
@@ -37,12 +42,13 @@ public class ChessBoard {
 
         drawHeaders(out, playerColor);
 
-        printPieces(out, playerColor);
+        printPieces(out, playerColor, legalMoves, chosenPos);
 
         drawHeaders(out, playerColor);
     }
 
-    private static void printPieces(PrintStream out, String playerColor) {
+    private static void printPieces(PrintStream out, String playerColor,
+                                    Collection<ChessMove> legalMoves, ChessPosition chosenPos) {
         boolean isBlack = playerColor.equalsIgnoreCase("black");
 
         for (int row = isBlack ? 1 : 8;
@@ -59,7 +65,11 @@ public class ChessBoard {
                 ChessPosition pos = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(pos);
 
-                drawSquare(out, piece, row, col);
+                if (legalMoves != null) {
+                    drawLegalMoveSquare(out, piece, row, col, chosenPos, legalMoves);
+                } else {
+                    drawSquare(out, piece, row, col);
+                }
             }
 
             setLightBlue(out);
@@ -71,9 +81,9 @@ public class ChessBoard {
     private static void drawSquare(PrintStream out, ChessPiece piece, int row, int col) {
         boolean isLight = (row + col) % 2 == 1;
         if (isLight) {
-            setWhite(out);
+            out.print(SET_BG_COLOR_WHITE);
         } else {
-            setPink(out);
+            out.print(SET_BG_COLOR_PINK);
         }
 
         if (piece == null) {
@@ -97,6 +107,62 @@ public class ChessBoard {
         }
 
         out.print(" " + symbol + " ");
+    }
+
+    private static void drawLegalMoveSquare(PrintStream out, ChessPiece piece, int row, int col,
+                                            ChessPosition chosenPos, Collection<ChessMove> legalMoves) {
+        if (chosenPos.getRow() == row && chosenPos.getColumn() == col) {
+            out.print(SET_BG_COLOR_YELLOW);
+        }
+        else if (moveInLegalMoves(row, col, legalMoves)) {
+            blackOrWhite(out, row, col);
+        } else {
+            drawSquare(out, piece, row, col);
+            return;
+        }
+
+        if (piece == null) {
+            out.print("   ");
+            return;
+        }
+
+        String symbol = switch (piece.getPieceType()) {
+            case KING -> "K";
+            case QUEEN -> "Q";
+            case ROOK -> "R";
+            case BISHOP -> "B";
+            case KNIGHT -> "N";
+            case PAWN -> "P";
+        };
+
+        if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+            out.print(SET_TEXT_COLOR_BLUE);
+        } else {
+            out.print(SET_TEXT_COLOR_RED);
+        }
+
+        out.print(" " + symbol + " ");
+    }
+
+    private static boolean moveInLegalMoves(int row, int col, Collection<ChessMove> legalMoves) {
+        for (ChessMove move : legalMoves) {
+            boolean equalRow = move.getEndPosition().getRow() == row;
+            boolean equalCol = move.getEndPosition().getColumn() == col;
+            if (equalRow && equalCol) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void blackOrWhite(PrintStream out, int row, int col) {
+        boolean isLight = (row + col) % 2 == 1;
+        if (isLight) {
+            out.print(SET_BG_COLOR_GREEN);
+        } else {
+            out.print(SET_BG_COLOR_DARK_GREEN);
+        }
     }
 
     private static void drawHeaders(PrintStream out, String playerColor) {
@@ -139,14 +205,6 @@ public class ChessBoard {
     private static void setGrey(PrintStream out) {
         out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_BLACK);
-    }
-
-    private static void setWhite(PrintStream out) {
-        out.print(SET_BG_COLOR_WHITE);
-    }
-
-    private static void setPink(PrintStream out) {
-        out.print(SET_BG_COLOR_PINK);
     }
 
 }

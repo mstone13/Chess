@@ -194,7 +194,7 @@ public class ChessClient {
 
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
-            ui.ChessBoard.run(game, playerColor.toUpperCase());
+            ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
 
             GamePlay.run(game, playerColor);
 
@@ -234,7 +234,7 @@ public class ChessClient {
             GameData game = orderedGames.get(gameNum);
             out.print(RESET_TEXT_BOLD_FAINT);
 
-            ChessBoard.run(game, null);
+            ChessBoard.run(game, null, null, null);
 
         } catch (Exception e) {
             return;
@@ -276,7 +276,7 @@ public class ChessClient {
     }
 
     public void printMenu(PrintStream out) {
-        out.println();
+        out.println(RESET_BG_COLOR);
         if (signedIn) {
             out.print("""
             >> 1. Help
