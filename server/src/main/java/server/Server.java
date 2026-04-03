@@ -136,7 +136,7 @@ public class Server {
         });
 
         // JOIN GAME
-        javalin.put("/game/join", ctx -> {
+        javalin.put("/game", ctx -> {
             String authToken = ctx.header("Authorization");
             JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
             try {
@@ -148,19 +148,6 @@ public class Server {
                 runtimeExceptionCatch(ctx, e);
             }
         });
-
-        // LEAVE GAME
-        javalin.put("/game/leave", ctx -> {
-            String authToken = ctx.header("Authorization");
-            LeaveGameRequest request = ctx.bodyAsClass(LeaveGameRequest.class);
-            try {
-                gameService.leaveGame(authToken, request);
-                ctx.status(200).json(Map.of());
-            } catch (RuntimeException e) {
-                runtimeExceptionCatch(ctx, e);
-            }
-        });
-
     }
 
     public void runtimeExceptionCatch(Context ctx, RuntimeException e) {

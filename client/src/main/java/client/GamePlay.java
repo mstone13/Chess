@@ -36,6 +36,8 @@ public class GamePlay {
         switch (result) {
             case "1" -> printHelp(out);
             case "2" -> ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
+            case "4" -> makeMove();
+            case "5" -> resign(out, game, playerColor);
             case "6" -> highlightLegalMoves(out, game, playerColor);
         }
     }
@@ -55,6 +57,27 @@ public class GamePlay {
         ui.ChessBoard.run(game, playerColor, legalMoves, pos);
     }
 
+    public void makeMove() {}
+
+    public void resign(PrintStream out, GameData game, String playerColor) {
+        out.print(SET_TEXT_BOLD);
+        out.println("Are you sure you want to forfeit the game? [Yes/No] ");
+        String answer = scanner.nextLine();
+
+        if (answer.equalsIgnoreCase("yes")) {
+            String opponentName;
+            if (playerColor.equalsIgnoreCase("white")) {
+                opponentName = game.blackUsername();
+            } else {
+                opponentName = game.whiteUsername();
+            }
+            out.println("You have forfeit the game '" + game.gameName() + "' to " + opponentName + ".");
+
+        } else if (answer.equalsIgnoreCase("no")) {
+            out.println("Oh. Okay, keep playing then. You got this!");
+        }
+        out.print(RESET_TEXT_BOLD_FAINT);
+    }
 
     public void printHelp(PrintStream out) {
         out.println(SET_TEXT_BOLD);

@@ -197,7 +197,7 @@ public class ChessClient {
             ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
 
             GamePlay.run(game, playerColor);
-            facade.leaveGame(authToken, gameNum, playerColor.toUpperCase());
+            facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -237,9 +237,7 @@ public class ChessClient {
 
             ChessBoard.run(game, null, null, null);
 
-        } catch (Exception e) {
-            return;
-        }
+        } catch (Exception _) {}
     }
 
     public HashMap<Integer, GameData> orderedGameList(List<GameData> games) {
