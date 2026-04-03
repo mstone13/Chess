@@ -45,6 +45,12 @@ public class ChessBoard {
         printPieces(out, playerColor, legalMoves, chosenPos);
 
         drawHeaders(out, playerColor);
+        if (legalMoves != null && legalMoves.isEmpty()) {
+            out.print(SET_TEXT_BOLD);
+            out.println(SET_TEXT_COLOR_WHITE);
+            out.println("There are no legal moves for this piece.");
+            out.print(RESET_TEXT_BOLD_FAINT);
+        }
     }
 
     private static void printPieces(PrintStream out, String playerColor,

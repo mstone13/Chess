@@ -55,6 +55,7 @@ public class GamePlay {
         ui.ChessBoard.run(game, playerColor, legalMoves, pos);
     }
 
+
     public void printHelp(PrintStream out) {
         out.println(SET_TEXT_BOLD);
 

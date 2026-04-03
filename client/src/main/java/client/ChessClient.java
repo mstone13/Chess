@@ -197,6 +197,7 @@ public class ChessClient {
             ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
 
             GamePlay.run(game, playerColor);
+            facade.leaveGame(authToken, gameNum, playerColor.toUpperCase());
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){

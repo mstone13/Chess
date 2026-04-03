@@ -136,14 +136,26 @@ public class Server {
         });
 
         // JOIN GAME
-        javalin.put("/game", ctx -> {
+        javalin.put("/game/join", ctx -> {
             String authToken = ctx.header("Authorization");
             JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
             try {
                 gameService.joinGame(authToken, request);
                 ctx.status(200).json(Map.of());
-            }catch (AlreadyTakenException e) {
+            } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
+            } catch (RuntimeException e) {
+                runtimeExceptionCatch(ctx, e);
+            }
+        });
+
+        // LEAVE GAME
+        javalin.put("/game/leave", ctx -> {
+            String authToken = ctx.header("Authorization");
+            LeaveGameRequest request = ctx.bodyAsClass(LeaveGameRequest.class);
+            try {
+                gameService.leaveGame(authToken, request);
+                ctx.status(200).json(Map.of());
             } catch (RuntimeException e) {
                 runtimeExceptionCatch(ctx, e);
             }

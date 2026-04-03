@@ -97,13 +97,29 @@ public class ServerFacade {
         JoinGameRequest request = new JoinGameRequest(playerColor, gameNum);
         String jsonRequest = serializer.toJson(request);
 
-        String jsonResponse = communicator.sendPutRequest("/game", jsonRequest, authToken);
+        String jsonResponse = communicator.sendPutRequest("/game/join", jsonRequest, authToken);
         if (jsonResponse.contains("message")) {
             String message;
             if (jsonResponse.contains("already taken")) {
                 message = "player slot already taken.";
             } else {
                 message = "please enter a valid game number and player color.";
+            }
+            throw new RuntimeException(message);
+        }
+    }
+
+    public void leaveGame(String authToken, int gameNum, String playerColor) {
+        LeaveGameRequest request = new LeaveGameRequest(playerColor, gameNum);
+        String jsonRequest = serializer.toJson(request);
+
+        String jsonResponse = communicator.sendPutRequest("/game/leave", jsonRequest, authToken);
+        if (jsonResponse.contains("message")) {
+            String message;
+            if (jsonResponse.contains("unauthorized")) {
+                message = "please log in in order to leave game";
+            } else {
+                message = jsonResponse; //you'd better change this later
             }
             throw new RuntimeException(message);
         }
