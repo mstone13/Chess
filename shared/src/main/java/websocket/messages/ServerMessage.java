@@ -11,6 +11,9 @@ import java.util.Objects;
 public class ServerMessage {
     ServerMessageType serverMessageType;
 
+    private String message;
+    private Object game; // mmm probably change this to GameData
+
     public enum ServerMessageType {
         LOAD_GAME,
         ERROR,
@@ -23,6 +26,18 @@ public class ServerMessage {
 
     public ServerMessageType getServerMessageType() {
         return this.serverMessageType;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public Object getGame() {
+        return game;
     }
 
     @Override

@@ -59,8 +59,8 @@ public class GameService {
        GameData updatedGame;
 
        if (request.playerColor.equals("WHITE")) {
-           // leave because user is already WHITE
            if (username.equals(gameData.whiteUsername())) {
+               // LEAVE
                updatedGame = new GameData(
                        gameData.gameID(),
                        null,
@@ -69,6 +69,7 @@ public class GameService {
                        gameData.game()
                );
            }  else if (gameData.whiteUsername() == null) {
+               // JOIN
                updatedGame = new GameData(
                        gameData.gameID(),
                        username,
@@ -110,6 +111,12 @@ public class GameService {
        gameDAO.updateGame(updatedGame);
     }
 
+    public String getUsername(String authToken) throws DataAccessException {
+       checkAuthData(authToken);
+
+       AuthData authData = authDAO.getAuth(authToken);
+       return authData.username();
+    }
 
     public void checkAuthData(String authToken) throws DataAccessException {
         AuthData authData = authDAO.getAuth(authToken);

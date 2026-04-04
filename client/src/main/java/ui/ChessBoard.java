@@ -22,9 +22,6 @@ public class ChessBoard {
 
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
-        if (playerColor == null) {
-            playerColor = "WHITE";
-        }
         drawChessBoard(out, game, playerColor, legalMoves, chosenPos);
         out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_WHITE);
