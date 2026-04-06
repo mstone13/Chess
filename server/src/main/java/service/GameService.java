@@ -125,4 +125,13 @@ public class GameService {
         }
     }
 
+    public GameData getGame(int gameID) throws DataAccessException {
+        GameData game = gameDAO.getGame(gameID);
+
+        if (game == null) {
+            throw new RuntimeException("Error: game does not exist");
+        }
+
+        return game;
+    }
 }

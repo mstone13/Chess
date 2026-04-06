@@ -8,8 +8,7 @@ import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsConnectHandler;
 import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
-import model.*;
-import org.eclipse.jetty.websocket.api.Session;
+import model.GameData;
 import org.jetbrains.annotations.NotNull;
 import service.GameService;
 import websocket.commands.UserGameCommand;
@@ -39,7 +38,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         try {
             UserGameCommand command = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             switch (command.getCommandType()) {
-                case CONNECT -> connect(command, ctx.session);
+                case CONNECT -> connect(command, ctx);
                 case MAKE_MOVE -> makeMove();
                 case LEAVE -> leave();
                 case RESIGN -> resign();
@@ -54,17 +53,31 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         System.out.println("Websocket closed");
     }
 
-    private void connect(UserGameCommand command, Session session) throws IOException, DataAccessException {
+    private void connect(UserGameCommand command, WsMessageContext ctx) throws IOException, DataAccessException {
         String auth = command.getAuthToken();
-        connections.add(command.getGameID(), session);
+        GameData game = gameService.getGame(command.getGameID());
+        connections.add(command.getGameID(), ctx.session);
+
         String user = gameService.getUsername(auth);
 
-        var message = String.format("%s has connected to the game", user);
         ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        msg.setMessage(message);
+        msg.setGame(game);
+        ctx.send(serializer.toJson(msg));
 
-        serializer.toJson(msg);
-        connections.broadcast(command.getGameID(), session, serializer.toJson(msg));
+        String role;
+        if (user.equals(game.whiteUsername())) {
+            role = "white player.";
+        } else if (user.equals(game.blackUsername())) {
+            role = "black player.";
+        } else {
+            role = "observer.";
+        }
+
+        String message = user + " connected as " + role;
+        ServerMessage notification = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        notification.setMessage(message);
+
+        connections.broadcast(game.gameID(), ctx.session, serializer.toJson(notification));
     }
 
     private void makeMove() {}
@@ -72,5 +85,5 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private void leave() {}
 
     private void resign() {}
-    
+
 }
