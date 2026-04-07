@@ -38,7 +38,7 @@ public class ServerMessage {
         return message;
     }
 
-    public Object getGame() {
+    public GameData getGame() {
         return game;
     }
 

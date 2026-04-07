@@ -1,6 +1,7 @@
 package client;
 
 import chess.*;
+import client.websocket.WebSocketFacade;
 import model.*;
 
 import java.io.PrintStream;

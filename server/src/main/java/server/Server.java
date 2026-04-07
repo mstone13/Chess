@@ -159,7 +159,22 @@ public class Server {
     }
 
     public int run(int desiredPort) {
-        javalin.start(desiredPort);
+        javalin = Javalin.create(config -> {
+            config.showJavalinBanner = false;
+            config.staticFiles.add("web");
+            config.jsonMapper(new JavalinGson());
+        }).start(desiredPort);
+
+        registerEndpoints();
+
+        javalin.ws("/ws", ws -> {
+            ws.onConnect(session -> System.out.println("Client connected."));
+            ws.onMessage(ctx -> {
+                System.out.println("Received: " + ctx.message());
+                System.out.println("Server received: " + ctx.message());
+            });
+        });
+
         return javalin.port();
     }
 

@@ -1,15 +1,30 @@
 package facade;
+import client.websocket.ServerMessageObserver;
+import client.websocket.WebSocketFacade;
 import com.google.gson.Gson;
 import communicator.ClientCommunicator;
 import model.*;
+import websocket.messages.ServerMessage;
+
+import java.io.IOException;
 
 
 public class ServerFacade {
     private final ClientCommunicator  communicator;
     private final Gson serializer = new Gson();
+    private final WebSocketFacade ws;
+    public ServerMessageObserver observer = new ServerMessageObserver() {
+        @Override
+        public void notify(ServerMessage message) {
+            System.out.println("Received: " + message);
+        }
+    };
 
-    public ServerFacade(ClientCommunicator communicator){
+    public ServerFacade(ClientCommunicator communicator) throws Exception {
+        String serverUrl = "http://localhost:8080";
         this.communicator = communicator;
+
+        this.ws = new WebSocketFacade(serverUrl, observer);
     }
 
     public UserResult register(String username, String password, String email) {
@@ -106,6 +121,12 @@ public class ServerFacade {
                 message = "please enter a valid game number and player color.";
             }
             throw new RuntimeException(message);
+        }
+
+        try {
+            ws.connect(authToken, gameNum);
+        } catch (IOException e) {
+            throw new RuntimeException("Error: failed to send connect command", e);
         }
     }
 

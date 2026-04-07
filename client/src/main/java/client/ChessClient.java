@@ -1,10 +1,12 @@
 package client;
 
+import client.websocket.ServerMessageObserver;
 import client.websocket.WebSocketFacade;
 import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
 import ui.*;
+import websocket.messages.ServerMessage;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -20,15 +22,13 @@ public class ChessClient {
     private String authToken = null;
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
-    private final WebSocketFacade ws;
     private final GamePlay GamePlay;
 
-    public ChessClient() {
+    public ChessClient() throws Exception {
         String serverUrl = "http://localhost:8080";
         ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
         this.GamePlay = new GamePlay();
-        this.ws = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() {
@@ -244,6 +244,25 @@ public class ChessClient {
 
         } catch (Exception _) {}
     }
+
+    public void notify(PrintStream out, ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> handleLoadGame(out, message);
+            case NOTIFICATION -> handleNotification(out, message);
+            case ERROR -> handleError(out, message);
+        }
+    }
+
+    public void handleLoadGame(PrintStream out, ServerMessage message) {
+
+    }
+
+    public void handleNotification(PrintStream out, ServerMessage message) {
+        out.println(SET_TEXT_COLOR_RED + message.getMessage());
+        out.print(RESET_TEXT_COLOR);
+    }
+
+    public void handleError(PrintStream out, ServerMessage message) {}
 
     public HashMap<Integer, GameData> orderedGameList(List<GameData> games) {
         HashMap<Integer, GameData> orderedGames = new HashMap<>();
