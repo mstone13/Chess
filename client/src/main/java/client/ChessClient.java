@@ -1,5 +1,6 @@
 package client;
 
+import client.websocket.WebSocketFacade;
 import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
@@ -19,12 +20,15 @@ public class ChessClient {
     private String authToken = null;
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
+    private final WebSocketFacade ws;
     private final GamePlay GamePlay;
 
     public ChessClient() {
-        ClientCommunicator communicator = new ClientCommunicator("http://localhost:8080");
+        String serverUrl = "http://localhost:8080";
+        ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
         this.GamePlay = new GamePlay();
+        this.ws = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() {

@@ -14,7 +14,7 @@ public class ServerMessage {
     ServerMessageType serverMessageType;
 
     private String message;
-    private GameData game; // mmm probably change this to GameData
+    private GameData game;
 
     public enum ServerMessageType {
         LOAD_GAME,
