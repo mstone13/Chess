@@ -1,38 +1,51 @@
 package websocket;
 
-import org.eclipse.jetty.websocket.api.Session;
+import com.google.gson.Gson;
+import io.javalin.websocket.WsContext;
+import websocket.messages.Notification;
+import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ConnectionManager {
-    public final ConcurrentHashMap<Integer, Set<Session>> connections = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<Integer, Set<WsContext>> connections = new ConcurrentHashMap<>();
+    private final Gson gson = new Gson();
 
-    public void add(Integer gameID, Session session) {
-        connections.computeIfAbsent(gameID, i -> ConcurrentHashMap.newKeySet()).add(session);
+    public void add(Integer gameID, WsContext ctx) {
+        connections.computeIfAbsent(gameID, k -> ConcurrentHashMap.newKeySet()).add(ctx);
     }
 
-    public void remove(Integer gameID, Session session) {
-        Set<Session> sessions = connections.get(gameID);
-        if (session != null) {
-            sessions.remove(session);
-        } if (sessions.isEmpty()) {
-            connections.remove(gameID);
-        }
-    }
-
-    public void broadcast(Integer gameID, Session excludeSession, String msg) throws IOException {
-        Set<Session> sessions = connections.get(gameID);
-
-        for (Session session: sessions) {
-            if (session.isOpen()) {
-                if (!session.equals(excludeSession)) {
-                    session.getRemote().sendString(msg);
-                }
+    public void remove(Integer gameID, WsContext ctx) {
+        Set<WsContext> sessions = connections.get(gameID);
+        if (sessions != null) {
+            sessions.remove(ctx);
+            if (sessions.isEmpty()) {
+                connections.remove(gameID);
             }
         }
     }
 
-    //saveSession method? make sure session is in map
+    public void broadcast(Integer gameID, WsContext excludeCtx, ServerMessage msg) throws IOException {
+        Set<WsContext> sessions = connections.get(gameID);
+        if (sessions == null) return;
+
+        System.out.println("Broadcasting to " + sessions.size());
+
+
+        String json = new Gson().toJson(msg);
+
+        for (WsContext ctx : sessions) {
+            if (excludeCtx == null || !ctx.equals(excludeCtx)) {
+                ctx.send(json);
+            }
+        }
+
+
+    }
+
+    public void saveSession(Integer gameID, WsContext ctx) {
+        add(gameID, ctx);
+    }
 }

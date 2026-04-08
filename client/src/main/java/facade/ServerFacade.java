@@ -4,6 +4,8 @@ import client.websocket.WebSocketFacade;
 import com.google.gson.Gson;
 import communicator.ClientCommunicator;
 import model.*;
+import org.eclipse.jetty.server.Server;
+import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -16,7 +18,11 @@ public class ServerFacade {
     public ServerMessageObserver observer = new ServerMessageObserver() {
         @Override
         public void notify(ServerMessage message) {
-            System.out.println("Received: " + message);
+//            System.out.println("Received: " + message.getServerMessageType());
+//            System.out.println("Message: " + message.getMessage());
+//            if (message.getGame() != null) {
+//                System.out.println("Game data" + message.getGame().gameName());
+//            }
         }
     };
 
@@ -123,11 +129,6 @@ public class ServerFacade {
             throw new RuntimeException(message);
         }
 
-        try {
-            ws.connect(authToken, gameNum);
-        } catch (IOException e) {
-            throw new RuntimeException("Error: failed to send connect command", e);
-        }
     }
 
 

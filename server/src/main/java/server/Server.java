@@ -1,12 +1,18 @@
 package server;
 
+import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
 import model.*;
 import io.javalin.json.JavalinGson;
+import org.eclipse.jetty.websocket.api.WebSocketContainer;
 import service.GameService;
 import service.UserService;
+import websocket.ConnectionManager;
+import websocket.WebSocketHandler;
+import websocket.commands.UserGameCommand;
+import websocket.messages.ServerMessage;
 
 import java.util.Map;
 
@@ -18,6 +24,8 @@ public class Server {
     private GameDAO gameDAO;
     private UserService userService;
     private GameService gameService;
+
+    private final WebSocketHandler webSocketHandler;
 
     public Server() {
         try {
@@ -31,6 +39,8 @@ public class Server {
         initializeServices();
         initializeJavalin();
         registerEndpoints();
+
+        webSocketHandler = new WebSocketHandler();
     }
 
     private void initializeDAOs() {
@@ -168,15 +178,15 @@ public class Server {
         registerEndpoints();
 
         javalin.ws("/ws", ws -> {
-            ws.onConnect(session -> System.out.println("Client connected."));
-            ws.onMessage(ctx -> {
-                System.out.println("Received: " + ctx.message());
-                System.out.println("Server received: " + ctx.message());
-            });
+            ws.onConnect(webSocketHandler);
+            ws.onMessage(webSocketHandler);
+            ws.onClose(webSocketHandler);
         });
 
+        System.out.println("Server running on port " + desiredPort);
         return javalin.port();
     }
+
 
     public void stop() {
         javalin.stop();

@@ -6,6 +6,7 @@ import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
 import ui.*;
+import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.awt.*;
@@ -17,11 +18,15 @@ import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
 
-public class ChessClient {
+public class ChessClient implements ServerMessageObserver {
     private static boolean signedIn = false;
+
     private String authToken = null;
+    private String username = null;
+
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
+    private final WebSocketFacade ws;
     private final GamePlay GamePlay;
 
     public ChessClient() throws Exception {
@@ -29,6 +34,7 @@ public class ChessClient {
         ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
         this.GamePlay = new GamePlay();
+        ws = new WebSocketFacade(serverUrl, facade.observer);
     }
 
     public void run() {
@@ -69,6 +75,7 @@ public class ChessClient {
                     if (loginResult != null) {
                         authToken = loginResult.authToken;
                         signedIn = true;
+                        username = loginResult.username;
                     }
                 }
                 case "4" -> {
@@ -76,6 +83,7 @@ public class ChessClient {
                     if (registerResult != null) {
                         authToken = registerResult.authToken;
                         signedIn = true;
+                        username = registerResult.username;
                     }
                 }
 
@@ -198,10 +206,12 @@ public class ChessClient {
 
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
-            ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
 
+            ws.connect(authToken, gameNum);
+
+            ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
             GamePlay.run(game, playerColor, true);
-            facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
+//            facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -239,18 +249,24 @@ public class ChessClient {
             GameData game = orderedGames.get(gameNum);
             out.print(RESET_TEXT_BOLD_FAINT);
 
+            ws.connect(authToken, gameNum);
+
             ChessBoard.run(game, "white", null, null);
             GamePlay.run(game, "white", false);
 
         } catch (Exception _) {}
     }
 
-    public void notify(PrintStream out, ServerMessage message) {
-        switch (message.getServerMessageType()) {
-            case LOAD_GAME -> handleLoadGame(out, message);
-            case NOTIFICATION -> handleNotification(out, message);
-            case ERROR -> handleError(out, message);
-        }
+    @Override
+    public void notify(ServerMessage message) {
+        new Thread(() -> {
+            PrintStream out = System.out;
+            switch (message.getServerMessageType()) {
+                case LOAD_GAME -> handleLoadGame(out, message);
+                case NOTIFICATION -> handleNotification(out, message);
+                case ERROR -> handleError(out, message);
+            }
+        }).start();
     }
 
     public void handleLoadGame(PrintStream out, ServerMessage message) {
@@ -258,7 +274,8 @@ public class ChessClient {
     }
 
     public void handleNotification(PrintStream out, ServerMessage message) {
-        out.println(SET_TEXT_COLOR_RED + message.getMessage());
+        out.println(SET_TEXT_COLOR_RED);
+        out.println(">>> " + message.getMessage());
         out.print(RESET_TEXT_COLOR);
     }
 
@@ -319,6 +336,5 @@ public class ChessClient {
             """);
         }
     }
-
 
 }
