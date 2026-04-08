@@ -59,40 +59,20 @@ public class GameService {
        GameData updatedGame;
 
        if (request.playerColor.equals("WHITE")) {
-           if (username.equals(gameData.whiteUsername())) {
-               // LEAVE
-               updatedGame = new GameData(
-                       gameData.gameID(),
-                       null,
-                       gameData.blackUsername(),
-                       gameData.gameName(),
-                       gameData.game()
-               );
-           }  else if (gameData.whiteUsername() == null) {
-               // JOIN
-               updatedGame = new GameData(
-                       gameData.gameID(),
-                       username,
-                       gameData.blackUsername(),
-                       gameData.gameName(),
-                       gameData.game()
-               );
-           } else {
+           if (gameData.whiteUsername() != null) {
                throw new AlreadyTakenException("Error: already taken");
            }
-       } else if (request.playerColor.equals("BLACK")) {
-           if (username.equals(gameData.blackUsername())) {
-               // LEAVE
-               updatedGame = new GameData(
-                       gameData.gameID(),
-                       gameData.whiteUsername(),
-                       null,
-                       gameData.gameName(),
-                       gameData.game()
-               );
-
-           } else if (gameData.blackUsername() == null) {
-               // JOIN
+           updatedGame = new GameData(
+                   gameData.gameID(),
+                   username,
+                   gameData.blackUsername(),
+                   gameData.gameName(),
+                   gameData.game()
+           );
+       } else if (request.playerColor.equals("BLACK")){
+           if (gameData.blackUsername() != null) {
+               throw new AlreadyTakenException("Error: already taken");
+           }
                updatedGame = new GameData(
                        gameData.gameID(),
                        gameData.whiteUsername(),
@@ -104,18 +84,51 @@ public class GameService {
            } else {
                throw new AlreadyTakenException("Error: already taken");
            }
-       } else {
-           throw new RuntimeException("Bad Request");
-       }
 
        gameDAO.updateGame(updatedGame);
     }
 
-    public String getUsername(String authToken) throws DataAccessException {
-       checkAuthData(authToken);
+    public void leaveGame(String authToken, int gameID) throws DataAccessException {
+        if (authToken == null || authToken.isBlank()) {
+            throw new RuntimeException("Bad Request");
+        }
 
-       AuthData authData = authDAO.getAuth(authToken);
-       return authData.username();
+        checkAuthData(authToken);
+        AuthData authData = authDAO.getAuth(authToken);
+        String username = authData.username();
+
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null){
+            throw new RuntimeException("Bad Request");
+        }
+
+        GameData updatedGame;
+
+        if (username.equals(gameData.whiteUsername())) {
+            updatedGame = new GameData(
+                    gameData.gameID(),
+                    null,
+                    gameData.blackUsername(),
+                    gameData.gameName(),
+                    gameData.game()
+            );
+        } else if (username.equals(gameData.blackUsername())) {
+            updatedGame = new GameData(
+                    gameData.gameID(),
+                    gameData.whiteUsername(),
+                    null,
+                    gameData.gameName(),
+                    gameData.game()
+            );
+        } else {
+            throw new RuntimeException("Bad Request"); //this means the player slot is already not taken
+        }
+
+        gameDAO.updateGame(updatedGame);
+
+        GameData after = gameDAO.getGame(gameID);
+        System.out.println("AFTER UPDATE -> White: " + after.whiteUsername()
+                + ", Black: " + after.blackUsername());
     }
 
     public void checkAuthData(String authToken) throws DataAccessException {

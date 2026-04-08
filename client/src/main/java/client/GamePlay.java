@@ -18,7 +18,7 @@ public class GamePlay {
         //maybe initialize the communicator/facade here??
     }
 
-    public void run(GameData game, String playerColor, boolean playing) {
+    public String run(GameData game, String playerColor, boolean playing) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         var result = "";
@@ -29,7 +29,7 @@ public class GamePlay {
             directAction(out, result, game, playerColor, playing);
         }
 
-        out.println("Exiting game. Thanks for playing!");
+        return "LEAVE";
     }
 
     public void directAction(PrintStream out, String result, GameData game, String playerColor, boolean playing) {

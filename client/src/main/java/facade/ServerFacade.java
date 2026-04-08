@@ -1,14 +1,14 @@
 package facade;
-import client.websocket.ServerMessageObserver;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import communicator.ClientCommunicator;
 import model.*;
-import websocket.messages.ServerMessage;
-
 
 public class ServerFacade {
     private final ClientCommunicator  communicator;
-    private final Gson serializer = new Gson();
+//    private final Gson serializer = new Gson();
+    private final Gson serializer = new GsonBuilder().serializeNulls().create();
+
 
     public ServerFacade(ClientCommunicator communicator) throws Exception {
         this.communicator = communicator;
@@ -100,6 +100,9 @@ public class ServerFacade {
         JoinGameRequest request = new JoinGameRequest(playerColor, gameNum);
         String jsonRequest = serializer.toJson(request);
 
+        System.out.println("JSON being sent from joinGame: " + jsonRequest);
+
+
         String jsonResponse = communicator.sendPutRequest("/game", jsonRequest, authToken);
         if (jsonResponse.contains("message")) {
             String message;
@@ -110,9 +113,15 @@ public class ServerFacade {
             }
             throw new RuntimeException(message);
         }
-
     }
 
+    public void leaveGame(String authToken, int gameNum) {
+        JoinGameRequest request = new JoinGameRequest(null, gameNum);
+
+        String jsonRequest = serializer.toJson(request);
+
+        communicator.sendPutRequest("/game", jsonRequest, authToken);
+    }
 
     public void clearApplication() {
         communicator.sendDeleteRequest("/db", null);

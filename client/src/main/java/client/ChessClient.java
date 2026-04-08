@@ -208,8 +208,13 @@ public class ChessClient implements ServerMessageObserver {
             webSocketFacade.connect(authToken, gameNum);
 
             ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
-            GamePlay.run(game, playerColor, true);
-//            facade.joinGame(authToken, gameNum, playerColor.toUpperCase());
+            String leaveCommand = GamePlay.run(game, playerColor, true);
+            if (leaveCommand != null && leaveCommand.equalsIgnoreCase("leave")) {
+                facade.leaveGame(authToken, gameNum);
+                webSocketFacade.leave(authToken, gameNum);
+                System.out.println("You have left the game.");
+            }
+
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){

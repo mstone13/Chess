@@ -55,7 +55,6 @@ public class Server {
     }
 
     private void initializeJavalin() {
-
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
             config.jsonMapper(new JavalinGson());
@@ -150,7 +149,11 @@ public class Server {
             String authToken = ctx.header("Authorization");
             JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
             try {
-                gameService.joinGame(authToken, request);
+                if (request.playerColor == null || request.playerColor.isBlank()) {
+                    gameService.leaveGame(authToken, request.gameID);
+                } else {
+                    gameService.joinGame(authToken, request);
+                }
                 ctx.status(200).json(Map.of());
             } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
