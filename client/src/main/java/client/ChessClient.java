@@ -6,10 +6,8 @@ import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
 import ui.*;
-import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.io.PrintStream;
@@ -26,7 +24,7 @@ public class ChessClient implements ServerMessageObserver {
 
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
-    private final WebSocketFacade ws;
+    private final WebSocketFacade webSocketFacade;
     private final GamePlay GamePlay;
 
     public ChessClient() throws Exception {
@@ -34,7 +32,7 @@ public class ChessClient implements ServerMessageObserver {
         ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
         this.GamePlay = new GamePlay();
-        ws = new WebSocketFacade(serverUrl, facade.observer);
+        webSocketFacade = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() {
@@ -207,7 +205,7 @@ public class ChessClient implements ServerMessageObserver {
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
 
-            ws.connect(authToken, gameNum);
+            webSocketFacade.connect(authToken, gameNum);
 
             ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
             GamePlay.run(game, playerColor, true);
@@ -249,7 +247,7 @@ public class ChessClient implements ServerMessageObserver {
             GameData game = orderedGames.get(gameNum);
             out.print(RESET_TEXT_BOLD_FAINT);
 
-            ws.connect(authToken, gameNum);
+            webSocketFacade.connect(authToken, gameNum);
 
             ChessBoard.run(game, "white", null, null);
             GamePlay.run(game, "white", false);
@@ -259,14 +257,12 @@ public class ChessClient implements ServerMessageObserver {
 
     @Override
     public void notify(ServerMessage message) {
-        new Thread(() -> {
-            PrintStream out = System.out;
-            switch (message.getServerMessageType()) {
-                case LOAD_GAME -> handleLoadGame(out, message);
-                case NOTIFICATION -> handleNotification(out, message);
-                case ERROR -> handleError(out, message);
-            }
-        }).start();
+        PrintStream out = System.out;
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> handleLoadGame(out, message);
+            case NOTIFICATION -> handleNotification(out, message);
+            case ERROR -> handleError(out, message);
+        }
     }
 
     public void handleLoadGame(PrintStream out, ServerMessage message) {

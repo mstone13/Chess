@@ -1,10 +1,12 @@
 package websocket;
 
 import com.google.gson.Gson;
+import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
+import dataaccess.SQLAuthDAO;
 import io.javalin.websocket.*;
 import org.jetbrains.annotations.NotNull;
 import websocket.commands.UserGameCommand;
-import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -13,6 +15,11 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     private final ConnectionManager connections = new ConnectionManager();
     private final Gson serializer = new Gson();
+    private AuthDAO authDAO;
+
+    public WebSocketHandler() {
+        authDAO = new SQLAuthDAO();
+    }
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
@@ -51,10 +58,12 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         connections.connections.values().forEach(set -> set.remove(ctx));
     }
 
-    public void connect(String authToken, int gameID, WsContext ctx) throws IOException {
+    public void connect(String authToken, int gameID, WsContext ctx) throws IOException, DataAccessException {
+        String username = authDAO.getAuth(authToken).username();
+
         connections.add(gameID, ctx);
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage("A player has connected");
+        message.setMessage(username + " has connected to the game.");
         connections.broadcast(gameID, ctx, message);
     }
 

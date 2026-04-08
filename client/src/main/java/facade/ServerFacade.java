@@ -1,36 +1,18 @@
 package facade;
 import client.websocket.ServerMessageObserver;
-import client.websocket.WebSocketFacade;
 import com.google.gson.Gson;
 import communicator.ClientCommunicator;
 import model.*;
-import org.eclipse.jetty.server.Server;
-import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
-
-import java.io.IOException;
 
 
 public class ServerFacade {
     private final ClientCommunicator  communicator;
     private final Gson serializer = new Gson();
-    private final WebSocketFacade ws;
-    public ServerMessageObserver observer = new ServerMessageObserver() {
-        @Override
-        public void notify(ServerMessage message) {
-//            System.out.println("Received: " + message.getServerMessageType());
-//            System.out.println("Message: " + message.getMessage());
-//            if (message.getGame() != null) {
-//                System.out.println("Game data" + message.getGame().gameName());
-//            }
-        }
-    };
 
     public ServerFacade(ClientCommunicator communicator) throws Exception {
-        String serverUrl = "http://localhost:8080";
         this.communicator = communicator;
 
-        this.ws = new WebSocketFacade(serverUrl, observer);
     }
 
     public UserResult register(String username, String password, String email) {

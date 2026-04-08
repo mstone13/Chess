@@ -40,7 +40,6 @@ public class WebSocketFacade extends Endpoint {
     }
 
     public void connect(String authToken, Integer gameID) throws IOException {
-//        sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID));
         try {
             Gson gson = new Gson();
 

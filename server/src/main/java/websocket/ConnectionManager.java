@@ -2,7 +2,6 @@ package websocket;
 
 import com.google.gson.Gson;
 import io.javalin.websocket.WsContext;
-import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -41,7 +40,6 @@ public class ConnectionManager {
                 ctx.send(json);
             }
         }
-
 
     }
 
