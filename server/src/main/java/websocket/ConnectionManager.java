@@ -30,9 +30,6 @@ public class ConnectionManager {
         Set<WsContext> sessions = connections.get(gameID);
         if (sessions == null) return;
 
-        System.out.println("Broadcasting to " + sessions.size());
-
-
         String json = new Gson().toJson(msg);
 
         for (WsContext ctx : sessions) {
@@ -40,7 +37,6 @@ public class ConnectionManager {
                 ctx.send(json);
             }
         }
-
     }
 
     public void saveSession(Integer gameID, WsContext ctx) {

@@ -8,6 +8,7 @@ import model.*;
 import ui.*;
 import websocket.messages.ServerMessage;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.io.PrintStream;
@@ -209,12 +210,8 @@ public class ChessClient implements ServerMessageObserver {
 
             ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
             String leaveCommand = GamePlay.run(game, playerColor, true);
-            if (leaveCommand != null && leaveCommand.equalsIgnoreCase("leave")) {
-                facade.leaveGame(authToken, gameNum);
-                webSocketFacade.leave(authToken, gameNum);
-                System.out.println("You have left the game.");
-            }
 
+            leaveCommandHandler(leaveCommand, gameNum, authToken);
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -258,6 +255,18 @@ public class ChessClient implements ServerMessageObserver {
             GamePlay.run(game, "white", false);
 
         } catch (Exception _) {}
+    }
+
+    public void leaveCommandHandler(String leaveCommand, int gameNum, String authToken) throws IOException {
+        if (leaveCommand.equalsIgnoreCase("leave")) {
+            facade.leaveGame(authToken, gameNum);
+            webSocketFacade.leave(authToken, gameNum);
+            System.out.println("You have left the game.");
+        } else {
+            facade.resign(authToken, gameNum);
+            webSocketFacade.resign(authToken, gameNum);
+            System.out.println("You have forfeit the game.");
+        }
     }
 
     @Override

@@ -1,4 +1,5 @@
 package service;
+import chess.ChessGame;
 import dataaccess.*;
 import model.*;
 
@@ -121,14 +122,42 @@ public class GameService {
                     gameData.game()
             );
         } else {
-            throw new RuntimeException("Bad Request"); //this means the player slot is already not taken
+            throw new RuntimeException("Bad Request");
         }
 
         gameDAO.updateGame(updatedGame);
+    }
 
-        GameData after = gameDAO.getGame(gameID);
-        System.out.println("AFTER UPDATE -> White: " + after.whiteUsername()
-                + ", Black: " + after.blackUsername());
+    public void resign(String authToken, int gameID) throws DataAccessException {
+        if (authToken == null || authToken.isBlank()) {
+            throw new RuntimeException("Bad Request");
+        }
+
+        checkAuthData(authToken);
+        AuthData authData = authDAO.getAuth(authToken);
+        String username = authData.username();
+
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null){
+            throw new RuntimeException("Bad Request: game does not exist");
+        }
+
+        if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
+            throw new RuntimeException("Bad Request: user not in game");
+        }
+
+        ChessGame game = gameData.game();
+        game.finishGame();
+
+        GameData updatedGame = new GameData(
+                gameData.gameID(),
+                gameData.whiteUsername(),
+                gameData.blackUsername(),
+                gameData.gameName(),
+                game
+        );
+
+        gameDAO.updateGame(updatedGame);
     }
 
     public void checkAuthData(String authToken) throws DataAccessException {

@@ -23,13 +23,17 @@ public class GamePlay {
 
         var result = "";
 
-        while (!result.equals("2")){
+        while (!result.equals("2") && !result.equals("5")){
             printMenu(out, playing);
             result = scanner.nextLine();
             directAction(out, result, game, playerColor, playing);
         }
 
-        return "LEAVE";
+        if (result.equals("5")) {
+            return "RESIGN";
+        } else {
+            return "LEAVE";
+        }
     }
 
     public void directAction(PrintStream out, String result, GameData game, String playerColor, boolean playing) {
@@ -37,7 +41,7 @@ public class GamePlay {
             case "1" -> printHelp(out, playing);
             case "3" -> ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
             case "4" -> makeMove();
-            case "5" -> resign(out, game, playerColor);
+//            case "5" -> resign(out, game, playerColor);
             case "6" -> highlightLegalMoves(out, game, playerColor);
         }
     }
@@ -59,25 +63,25 @@ public class GamePlay {
 
     public void makeMove() {}
 
-    public void resign(PrintStream out, GameData game, String playerColor) {
-        out.print(SET_TEXT_BOLD);
-        out.println("Are you sure you want to forfeit the game? [Yes/No] ");
-        String answer = scanner.nextLine();
-
-        if (answer.equalsIgnoreCase("yes")) {
-            String opponentName;
-            if (playerColor.equalsIgnoreCase("white")) {
-                opponentName = game.blackUsername();
-            } else {
-                opponentName = game.whiteUsername();
-            }
-            out.println("You have forfeit the game '" + game.gameName() + "' to " + opponentName + ".");
-
-        } else if (answer.equalsIgnoreCase("no")) {
-            out.println("Oh. Okay, keep playing then. You got this!");
-        }
-        out.print(RESET_TEXT_BOLD_FAINT);
-    }
+//    public void resign(PrintStream out, GameData game, String playerColor) {
+//        out.print(SET_TEXT_BOLD);
+//        out.println("Are you sure you want to forfeit the game? [Yes/No] ");
+//        String answer = scanner.nextLine();
+//
+//        if (answer.equalsIgnoreCase("yes")) {
+//            String opponentName;
+//            if (playerColor.equalsIgnoreCase("white")) {
+//                opponentName = game.blackUsername();
+//            } else {
+//                opponentName = game.whiteUsername();
+//            }
+//            out.println("You have forfeit the game '" + game.gameName() + "' to " + opponentName + ".");
+//
+//        } else if (answer.equalsIgnoreCase("no")) {
+//            out.println("Oh. Okay, keep playing then. You got this!");
+//        }
+//        out.print(RESET_TEXT_BOLD_FAINT);
+//    }
 
     public void printHelp(PrintStream out, boolean playing) {
         out.println(SET_TEXT_BOLD);

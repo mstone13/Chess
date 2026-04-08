@@ -97,11 +97,8 @@ public class ServerFacade {
     }
 
     public void joinGame(String authToken, int gameNum, String playerColor) {
-        JoinGameRequest request = new JoinGameRequest(playerColor, gameNum);
+        JoinGameRequest request = new JoinGameRequest(playerColor, gameNum, "JOIN");
         String jsonRequest = serializer.toJson(request);
-
-        System.out.println("JSON being sent from joinGame: " + jsonRequest);
-
 
         String jsonResponse = communicator.sendPutRequest("/game", jsonRequest, authToken);
         if (jsonResponse.contains("message")) {
@@ -116,11 +113,14 @@ public class ServerFacade {
     }
 
     public void leaveGame(String authToken, int gameNum) {
-        JoinGameRequest request = new JoinGameRequest(null, gameNum);
-
+        JoinGameRequest request = new JoinGameRequest(null, gameNum, "LEAVE");
         String jsonRequest = serializer.toJson(request);
 
         communicator.sendPutRequest("/game", jsonRequest, authToken);
+    }
+
+    public void resign(String authToken, int gameNum) {
+
     }
 
     public void clearApplication() {

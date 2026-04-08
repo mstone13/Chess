@@ -7,7 +7,6 @@ import java.net.URI;
 
 import jakarta.websocket.*;
 import websocket.commands.UserGameCommand;
-import websocket.messages.Notification;
 import websocket.messages.ServerMessage;
 
 public class WebSocketFacade extends Endpoint {
@@ -32,7 +31,6 @@ public class WebSocketFacade extends Endpoint {
         this.session.addMessageHandler(new MessageHandler.Whole<String>() {
             @Override
             public void onMessage(String message) {
-//                System.out.println("Raw WS message: " + message);
                 ServerMessage serverMsg = new Gson().fromJson(message, ServerMessage.class);
                 observer.notify(serverMsg);
             }

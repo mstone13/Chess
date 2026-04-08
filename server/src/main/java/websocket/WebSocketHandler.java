@@ -41,7 +41,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 case CONNECT -> connect(command.getAuthToken(), command.getGameID(), ctx);
 //                case MAKE_MOVE -> makeMove(session, username, (MakeMoveCommand) command);
                 case LEAVE -> leave(command.getAuthToken(), command.getGameID(), ctx);
-//                case RESIGN -> resign (session, username, (ResignCommand) command);
+                case RESIGN -> resign(command.getAuthToken(), command.getGameID(), ctx);
             }
         } catch (RuntimeException ex) {
             throw new RuntimeException(ex.getMessage());
@@ -73,6 +73,15 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         connections.remove(gameID, ctx);
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         message.setMessage(username + " has left the game.");
+        connections.broadcast(gameID, ctx, message);
+    }
+
+    private void resign(String authToken, int gameID, WsContext ctx) throws DataAccessException, IOException {
+        String username = authDAO.getAuth(authToken).username();
+
+        connections.remove(gameID, ctx);
+        ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        message.setMessage(username + " has forfeit the game.");
         connections.broadcast(gameID, ctx, message);
     }
 }

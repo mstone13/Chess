@@ -14,6 +14,7 @@ import java.util.Objects;
 public class ChessGame {
     private TeamColor teamTurn;
     private ChessBoard board;
+    private boolean isFinished = false;
 
     public ChessGame() {
         this.teamTurn = TeamColor.WHITE;
@@ -303,4 +304,15 @@ public class ChessGame {
         return board;
     }
 
+    public boolean isFinished() {
+        return isFinished;
+    }
+
+    public void finishGame() {
+        this.isFinished = true;
+    }
+
+    public boolean canMove() {
+        return !isFinished;
+    }
 }

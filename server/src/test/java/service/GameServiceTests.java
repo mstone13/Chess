@@ -92,7 +92,7 @@ public class GameServiceTests {
         CreateGameRequest request = new CreateGameRequest("JoinGameTest");
         gameService.createGame(authToken, request);
 
-        JoinGameRequest joinGameRequest = new JoinGameRequest("WHITE", 1);
+        JoinGameRequest joinGameRequest = new JoinGameRequest("WHITE", 1, "JOIN");
         gameService.joinGame(authToken, joinGameRequest);
 
         GameData game = gameDAO.getGame(1);
@@ -105,10 +105,10 @@ public class GameServiceTests {
         CreateGameRequest request = new CreateGameRequest("PopularGame");
         gameService.createGame(authToken, request);
 
-        JoinGameRequest joinGameRequest = new JoinGameRequest("BLACK", 1);
+        JoinGameRequest joinGameRequest = new JoinGameRequest("BLACK", 1, "JOIN");
         gameService.joinGame(authToken, joinGameRequest);
 
-        JoinGameRequest anotherJoinRequest = new JoinGameRequest("BLACK", 1);
+        JoinGameRequest anotherJoinRequest = new JoinGameRequest("BLACK", 1, "JOIN");
         assertThrows(AlreadyTakenException.class, () -> {
             gameService.joinGame(authToken, anotherJoinRequest);
         });

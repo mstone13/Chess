@@ -1,18 +1,13 @@
 package server;
 
-import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
 import model.*;
 import io.javalin.json.JavalinGson;
-import org.eclipse.jetty.websocket.api.WebSocketContainer;
 import service.GameService;
 import service.UserService;
-import websocket.ConnectionManager;
 import websocket.WebSocketHandler;
-import websocket.commands.UserGameCommand;
-import websocket.messages.ServerMessage;
 
 import java.util.Map;
 
@@ -149,10 +144,11 @@ public class Server {
             String authToken = ctx.header("Authorization");
             JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
             try {
-                if (request.playerColor == null || request.playerColor.isBlank()) {
-                    gameService.leaveGame(authToken, request.gameID);
-                } else {
-                    gameService.joinGame(authToken, request);
+                switch (request.action.toUpperCase()) {
+                    case "LEAVE" -> gameService.leaveGame(authToken, request.gameID);
+                    case "RESIGN" -> gameService.resign(authToken, request.gameID);
+                    case "JOIN" -> gameService.joinGame(authToken, new JoinGameRequest(request.playerColor, request.gameID, "JOIN"));
+                    default -> throw new RuntimeException("Invalid action: " + request.action);
                 }
                 ctx.status(200).json(Map.of());
             } catch (AlreadyTakenException e) {
