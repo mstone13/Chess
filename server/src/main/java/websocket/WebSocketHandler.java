@@ -1,11 +1,14 @@
 package websocket;
 
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
-import dataaccess.AuthDAO;
-import dataaccess.DataAccessException;
-import dataaccess.SQLAuthDAO;
+import dataaccess.*;
 import io.javalin.websocket.*;
+import model.GameData;
 import org.jetbrains.annotations.NotNull;
+import service.GameService;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
@@ -16,9 +19,15 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private final ConnectionManager connections = new ConnectionManager();
     private final Gson serializer = new Gson();
     private AuthDAO authDAO;
+    private GameDAO gameDAO;
+    private Gson gson;
+    private GameService gameService;
 
-    public WebSocketHandler() {
-        authDAO = new SQLAuthDAO();
+    public WebSocketHandler(GameService gameService, AuthDAO authDAO, GameDAO gameDAO) {
+        this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
+        this.gameService = gameService;
+        gson = new Gson();
     }
 
     @Override
@@ -34,12 +43,18 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         try {
             UserGameCommand command = serializer.fromJson(ctx.message(), UserGameCommand.class);
             gameID = command.getGameID();
-//            String username = getUsername(command.getAuthToken());
-            connections.saveSession(gameID, ctx); // (in connection manager)
+            connections.saveSession(gameID, ctx);
 
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command.getAuthToken(), command.getGameID(), ctx);
-//                case MAKE_MOVE -> makeMove(session, username, (MakeMoveCommand) command);
+                case MAKE_MOVE -> {
+                    MakeMoveCommand moveCommand = gson.fromJson(ctx.message(), MakeMoveCommand.class);
+                    try {
+                        makeMove(moveCommand.getAuthToken(), moveCommand.getGameID(), moveCommand.getMove(), ctx);
+                    } catch (InvalidMoveException e) {
+                        sendError(ctx, e.getMessage());
+                    }
+                }
                 case LEAVE -> leave(command.getAuthToken(), command.getGameID(), ctx);
                 case RESIGN -> resign(command.getAuthToken(), command.getGameID(), ctx);
             }
@@ -47,7 +62,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             throw new RuntimeException(ex.getMessage());
         } catch (Exception ex) {
             ex.printStackTrace();
-
         }
     }
 
@@ -60,10 +74,18 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     public void connect(String authToken, int gameID, WsContext ctx) throws IOException, DataAccessException {
         String username = authDAO.getAuth(authToken).username();
+        String playerColor;
+        GameData gameData = gameDAO.getGame(gameID);
+
+        if (username.equals(gameData.blackUsername())) {
+            playerColor = "black player";
+        } else {
+            playerColor = "white player";
+        }
 
         connections.add(gameID, ctx);
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage(username + " has connected to the game.");
+        message.setMessage(username + " has connected to the game as the " + playerColor);
         connections.broadcast(gameID, ctx, message);
     }
 
@@ -83,5 +105,29 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         message.setMessage(username + " has forfeit the game.");
         connections.broadcast(gameID, ctx, message);
+    }
+
+    private void makeMove(String authToken, int gameID, ChessMove move, WsContext ctx) throws DataAccessException,
+            InvalidMoveException, IOException {
+        String username = authDAO.getAuth(authToken).username();
+
+        gameService.makeMove(authToken, gameID, move);
+
+        ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        message.setMessage(username + " moved from " + move.getStartPosition() + " to " + move.getEndPosition() +
+                (move.getPromotionPiece() != null ? ", promoting to " + move.getPromotionPiece() : ""));
+        connections.broadcast(gameID, ctx, message);
+
+        GameData updatedGame = gameDAO.getGame(gameID);
+
+        ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+        loadGame.setGame(updatedGame);
+        connections.broadcast(gameID, null, loadGame);
+    }
+
+    private void sendError(WsContext ctx, String message) throws IOException {
+        ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+        error.setMessage(message);
+        ctx.send(gson.toJson(error));
     }
 }

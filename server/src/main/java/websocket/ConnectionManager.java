@@ -30,7 +30,7 @@ public class ConnectionManager {
         Set<WsContext> sessions = connections.get(gameID);
         if (sessions == null) return;
 
-        String json = new Gson().toJson(msg);
+        String json = gson.toJson(msg);
 
         for (WsContext ctx : sessions) {
             if (excludeCtx == null || !ctx.equals(excludeCtx)) {

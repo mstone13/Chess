@@ -1,6 +1,8 @@
 package client;
 
 import chess.*;
+import client.websocket.WebSocketFacade;
+import facade.ServerFacade;
 import model.*;
 
 import java.io.PrintStream;
@@ -8,17 +10,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Scanner;
 
-import static ui.EscapeSequences.RESET_TEXT_BOLD_FAINT;
-import static ui.EscapeSequences.SET_TEXT_BOLD;
+import static ui.EscapeSequences.*;
 
 public class GamePlay {
     private final Scanner scanner = new Scanner(System.in);
 
-    public GamePlay() {
-        //maybe initialize the communicator/facade here??
-    }
+    public GamePlay() {}
 
-    public String run(GameData game, String playerColor, boolean playing) {
+    public String run(GameData game, String playerColor, boolean playing,
+                      WebSocketFacade facade, String authToken) throws InvalidMoveException {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         var result = "";
@@ -26,7 +26,7 @@ public class GamePlay {
         while (!result.equals("2") && !result.equals("5")){
             printMenu(out, playing);
             result = scanner.nextLine();
-            directAction(out, result, game, playerColor, playing);
+            directAction(out, result, game, playerColor, playing, facade, authToken);
         }
 
         if (result.equals("5")) {
@@ -36,52 +36,159 @@ public class GamePlay {
         }
     }
 
-    public void directAction(PrintStream out, String result, GameData game, String playerColor, boolean playing) {
+    public void directAction(PrintStream out, String result, GameData game, String playerColor, boolean playing,
+                                WebSocketFacade facade, String authToken) throws InvalidMoveException {
         switch (result) {
             case "1" -> printHelp(out, playing);
             case "3" -> ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
-            case "4" -> makeMove();
-//            case "5" -> resign(out, game, playerColor);
+            case "4" -> makeMove(out, game, facade, playerColor, authToken);
             case "6" -> highlightLegalMoves(out, game, playerColor);
         }
     }
 
     public void highlightLegalMoves(PrintStream out, GameData game, String playerColor) {
-        out.println("Enter the row of a piece [1-8]: ");
-        int row = Integer.parseInt(scanner.nextLine());
-
-        out.println("Enter the column of a piece [a-h]: ");
-        char input = scanner.nextLine().toLowerCase().charAt(0);
-        int col = input - 'a' + 1;
-
-
-        ChessPosition pos = new ChessPosition(row, col);
+        ChessPosition pos = getStartPos(out);
         Collection<ChessMove> legalMoves = new ChessGame().validMoves(pos);
 
         ui.ChessBoard.run(game, playerColor, legalMoves, pos);
     }
 
-    public void makeMove() {}
+    public void makeMove(PrintStream out, GameData gameData, WebSocketFacade facade,
+                         String playerColor, String authToken) {
+        try {
+            if(!confirmTurn(playerColor, gameData)) {
+                out.println(SET_TEXT_COLOR_RED + ">> ERROR: It's not your turn. Please wait for the other player.");
+                out.print(RESET_TEXT_COLOR);
+                return;
+            }
 
-//    public void resign(PrintStream out, GameData game, String playerColor) {
-//        out.print(SET_TEXT_BOLD);
-//        out.println("Are you sure you want to forfeit the game? [Yes/No] ");
-//        String answer = scanner.nextLine();
-//
-//        if (answer.equalsIgnoreCase("yes")) {
-//            String opponentName;
-//            if (playerColor.equalsIgnoreCase("white")) {
-//                opponentName = game.blackUsername();
-//            } else {
-//                opponentName = game.whiteUsername();
-//            }
-//            out.println("You have forfeit the game '" + game.gameName() + "' to " + opponentName + ".");
-//
-//        } else if (answer.equalsIgnoreCase("no")) {
-//            out.println("Oh. Okay, keep playing then. You got this!");
-//        }
-//        out.print(RESET_TEXT_BOLD_FAINT);
-//    }
+            ChessPosition startPos = getStartPos(out);
+            ChessPosition endPos = getEndPos(out);
+            ChessPiece.PieceType promotionPiece = getPromotionPiece(out, startPos, endPos, gameData);
+
+            ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
+
+            facade.makeMove(authToken, gameData.gameID(), move);
+
+        } catch (Exception e) {
+            out.println("Error sending move: " + e.getMessage());
+        }
+    }
+
+    public boolean confirmTurn(String playerColor, GameData gameData) {
+        ChessGame.TeamColor actualColor = null;
+        if (playerColor.equalsIgnoreCase("white")) {
+            actualColor = ChessGame.TeamColor.WHITE;
+        } else {
+            actualColor = ChessGame.TeamColor.BLACK;
+        }
+
+        return gameData.game().getTeamTurn().equals(actualColor);
+    }
+
+    public ChessPosition getStartPos(PrintStream out) {
+        boolean needToLoop = true;
+        int row = 0;
+        int col = 0;
+
+        out.println("Please enter a piece:");
+        while (needToLoop) {
+            out.println("Enter the row of a piece [1-8]: ");
+            try {
+                row = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                out.println("Please input a valid integer for row");
+                continue;
+            }
+
+            out.println("Enter the column of a piece [a-h]: ");
+            String inputLine = scanner.nextLine().toLowerCase();
+            if (inputLine.length() != 1) {
+                out.println("Please input a single character for column [a-h].");
+                continue;
+            }
+            char input = inputLine.charAt(0);
+            col = input - 'a' + 1;
+
+            if (row < 1 || row > 8 || col < 1 || col > 8) {
+                out.println("Please input a valid row [1-8] and col [a-h].");
+            } else {
+                needToLoop = false;
+            }
+        }
+
+        return new ChessPosition(row, col);
+    }
+
+    public ChessPosition getEndPos(PrintStream out) {
+        boolean needToLoop = true;
+        int row = 0;
+        int col = 0;
+
+        out.println("Please enter end position:");
+        while (needToLoop) {
+            out.println("Enter the row of the desired end position [1-8]: ");
+            try {
+                row = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                out.println("Please input a valid integer for row");
+                continue;
+            }
+
+            out.println("Enter the column of the desired end position [a-h]: ");
+            String inputLine = scanner.nextLine().toLowerCase();
+            if (inputLine.length() != 1) {
+                out.println("Please input a single character for column [a-h].");
+                continue;
+            }
+            char input = inputLine.charAt(0);
+            col = input - 'a' + 1;
+
+            if (row < 1 || row > 8 || col < 1 || col > 8) {
+                out.println("Please input a valid row [1-8] and col [a-h].");
+            } else {
+                needToLoop = false;
+            }
+        }
+
+        return new ChessPosition(row, col);
+    }
+
+    public ChessPiece.PieceType getPromotionPiece(PrintStream out, ChessPosition startPos, ChessPosition endPos,
+                                                  GameData gameData) {
+        ChessGame game = gameData.game();
+        ChessPiece piece = game.getBoard().getPiece(startPos);
+        ChessPiece.PieceType promotionPiece = null;
+
+
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            boolean canPromote = piece.getTeamColor() == ChessGame.TeamColor.BLACK && endPos.getRow() == 1 ||
+                    piece.getTeamColor() == ChessGame.TeamColor.WHITE && endPos.getRow() == 8;
+
+            if (canPromote) {
+                while (promotionPiece == null) {
+                    out.println("""
+                    Promotion pieces:
+                    >> Q = Queen
+                    >> R = Rook
+                    >> B = Bishop
+                    >> N = Knight
+                    """);
+                    out.print("Enter what promotion piece you want: ");
+                    String choice = scanner.nextLine().toUpperCase();
+
+                    switch (choice) {
+                        case "Q" -> promotionPiece = ChessPiece.PieceType.QUEEN;
+                        case "R" -> promotionPiece = ChessPiece.PieceType.ROOK;
+                        case "B" -> promotionPiece = ChessPiece.PieceType.BISHOP;
+                        case "N" -> promotionPiece = ChessPiece.PieceType.KNIGHT;
+                        default -> out.println("Invalid choice! Please enter Q, R, B, or N.");
+                    }
+                }
+            }
+        }
+        return promotionPiece;
+    }
 
     public void printHelp(PrintStream out, boolean playing) {
         out.println(SET_TEXT_BOLD);

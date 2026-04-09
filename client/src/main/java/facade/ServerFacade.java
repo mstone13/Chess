@@ -1,4 +1,6 @@
 package facade;
+import chess.ChessPiece;
+import chess.ChessPosition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import communicator.ClientCommunicator;
@@ -6,7 +8,6 @@ import model.*;
 
 public class ServerFacade {
     private final ClientCommunicator  communicator;
-//    private final Gson serializer = new Gson();
     private final Gson serializer = new GsonBuilder().serializeNulls().create();
 
 
@@ -120,6 +121,14 @@ public class ServerFacade {
     }
 
     public void resign(String authToken, int gameNum) {
+        JoinGameRequest request = new JoinGameRequest(null, gameNum, "RESIGN");
+        String jsonRequest = serializer.toJson(request);
+
+        communicator.sendPutRequest("/game", jsonRequest, authToken);
+    }
+
+    public void makeMove(String authToken, int gameID, ChessPosition startPos, ChessPosition endPos,
+                         ChessPiece.PieceType promotionPiece) {
 
     }
 

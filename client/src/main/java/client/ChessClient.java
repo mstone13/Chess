@@ -1,5 +1,6 @@
 package client;
 
+import chess.ChessGame;
 import client.websocket.ServerMessageObserver;
 import client.websocket.WebSocketFacade;
 import communicator.ClientCommunicator;
@@ -209,9 +210,9 @@ public class ChessClient implements ServerMessageObserver {
             webSocketFacade.connect(authToken, gameNum);
 
             ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
-            String leaveCommand = GamePlay.run(game, playerColor, true);
+            String gamePlayAction = GamePlay.run(game, playerColor, true, webSocketFacade, authToken);
 
-            leaveCommandHandler(leaveCommand, gameNum, authToken);
+            gameplayCommand(gamePlayAction, gameNum, authToken);
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -252,12 +253,12 @@ public class ChessClient implements ServerMessageObserver {
             webSocketFacade.connect(authToken, gameNum);
 
             ChessBoard.run(game, "white", null, null);
-            GamePlay.run(game, "white", false);
+            GamePlay.run(game, "white", false, webSocketFacade, authToken);
 
         } catch (Exception _) {}
     }
 
-    public void leaveCommandHandler(String leaveCommand, int gameNum, String authToken) throws IOException {
+    public void gameplayCommand(String leaveCommand, int gameNum, String authToken) throws IOException {
         if (leaveCommand.equalsIgnoreCase("leave")) {
             facade.leaveGame(authToken, gameNum);
             webSocketFacade.leave(authToken, gameNum);
@@ -280,6 +281,35 @@ public class ChessClient implements ServerMessageObserver {
     }
 
     public void handleLoadGame(PrintStream out, ServerMessage message) {
+        GameData gameData = message.getGame();
+
+        if (gameData == null) {
+            out.println("No game data received.");
+            return;
+        }
+
+        ChessGame game = gameData.game();
+        ChessGame.TeamColor currentTurn = game.getTeamTurn();
+        out.println(SET_TEXT_BOLD);
+        out.println("Current board:" + RESET_TEXT_BOLD_FAINT);
+
+        String playerColor;
+        if (username.equalsIgnoreCase(gameData.whiteUsername())) {
+            playerColor = "white";
+        } else if (username.equalsIgnoreCase(gameData.blackUsername())) {
+            playerColor = "black";
+        } else {
+            playerColor = "white";
+        }
+
+        ChessBoard.run(gameData, playerColor, null, null);
+        out.println(SET_TEXT_COLOR_BLUE + "Turn: " + currentTurn);
+
+        if (!game.canMove()) {
+            out.println("The game is over!");
+        }
+
+        out.println(RESET_TEXT_COLOR);
 
     }
 
@@ -289,7 +319,11 @@ public class ChessClient implements ServerMessageObserver {
         out.print(RESET_TEXT_COLOR);
     }
 
-    public void handleError(PrintStream out, ServerMessage message) {}
+    public void handleError(PrintStream out, ServerMessage message) {
+        out.println(SET_TEXT_COLOR_RED);
+        out.println(">> ERROR: " + message.getMessage());
+        out.print(RESET_TEXT_COLOR);
+    }
 
     public HashMap<Integer, GameData> orderedGameList(List<GameData> games) {
         HashMap<Integer, GameData> orderedGames = new HashMap<>();

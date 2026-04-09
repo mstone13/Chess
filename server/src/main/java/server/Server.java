@@ -1,5 +1,6 @@
 package server;
 
+import chess.InvalidMoveException;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
@@ -8,6 +9,7 @@ import io.javalin.json.JavalinGson;
 import service.GameService;
 import service.UserService;
 import websocket.WebSocketHandler;
+import websocket.commands.MakeMoveCommand;
 
 import java.util.Map;
 
@@ -30,12 +32,15 @@ public class Server {
             throw new RuntimeException("Failed to configure database", e);
         }
 
+
         initializeDAOs();
         initializeServices();
+
+        webSocketHandler = new WebSocketHandler(gameService, authDAO, gameDAO);
+
         initializeJavalin();
         registerEndpoints();
 
-        webSocketHandler = new WebSocketHandler();
     }
 
     private void initializeDAOs() {
@@ -142,13 +147,18 @@ public class Server {
         // JOIN GAME
         javalin.put("/game", ctx -> {
             String authToken = ctx.header("Authorization");
-            JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
+
+            Map<String, Object> body = ctx.bodyAsClass(Map.class);
+            String action = (String) body.get("action");
+
             try {
-                switch (request.action.toUpperCase()) {
+                JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
+
+                switch (action.toUpperCase()) {
                     case "LEAVE" -> gameService.leaveGame(authToken, request.gameID);
                     case "RESIGN" -> gameService.resign(authToken, request.gameID);
-                    case "JOIN" -> gameService.joinGame(authToken, new JoinGameRequest(request.playerColor, request.gameID, "JOIN"));
-                    default -> throw new RuntimeException("Invalid action: " + request.action);
+                    case "JOIN" -> gameService.joinGame(authToken, request);
+                    default -> throw new RuntimeException("Invalid action: " + action);
                 }
                 ctx.status(200).json(Map.of());
             } catch (AlreadyTakenException e) {

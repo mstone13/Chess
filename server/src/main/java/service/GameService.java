@@ -1,7 +1,10 @@
 package service;
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import dataaccess.*;
 import model.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -158,6 +161,66 @@ public class GameService {
         );
 
         gameDAO.updateGame(updatedGame);
+    }
+
+    public void makeMove(String authToken, int gameID, ChessMove move)
+            throws DataAccessException, InvalidMoveException {
+
+        checkAuthData(authToken);
+
+        String username = authDAO.getAuth(authToken).username();
+
+        GameData gameData = gameDAO.getGame(gameID);
+        if (gameData == null) {
+            throw new RuntimeException("Game does not exist");
+        }
+
+        ChessGame game = getChessGame(gameData, username);
+
+        game.makeMove(move);
+
+        if (game.isInStalemate(ChessGame.TeamColor.BLACK) ||
+                game.isInStalemate(ChessGame.TeamColor.WHITE) ||
+                game.isInCheckmate(ChessGame.TeamColor.BLACK) ||
+                game.isInCheckmate(ChessGame.TeamColor.WHITE)) {
+
+            game.finishGame();
+        }
+
+        gameDAO.updateGame(new GameData(
+                gameData.gameID(),
+                gameData.whiteUsername(),
+                gameData.blackUsername(),
+                gameData.gameName(),
+                game
+        ));
+    }
+
+    @NotNull
+    private static ChessGame getChessGame(GameData gameData, String username)
+            throws InvalidMoveException {
+
+        ChessGame game = gameData.game();
+
+        if (!game.canMove()) {
+            throw new InvalidMoveException("The game is over.");
+        }
+
+        ChessGame.TeamColor playerColor;
+
+        if (username.equals(gameData.whiteUsername())) {
+            playerColor = ChessGame.TeamColor.WHITE;
+        } else if (username.equals(gameData.blackUsername())) {
+            playerColor = ChessGame.TeamColor.BLACK;
+        } else {
+            throw new InvalidMoveException("You are not a player in this game.");
+        }
+
+        if (game.getTeamTurn() != playerColor) {
+            throw new InvalidMoveException("Sorry, it's not your turn.");
+        }
+
+        return game;
     }
 
     public void checkAuthData(String authToken) throws DataAccessException {

@@ -126,7 +126,7 @@ public class ChessGame {
                     teamTurn = changeTeamTurn(piece.getTeamColor());
 
                 } else {
-                    throw new InvalidMoveException("Illegal Move");
+                    throw new InvalidMoveException("Illegal Move. Make sure the end position is a legal move!");
                 }
         } else if (piece == null || piece.getTeamColor() != teamTurn) {
             throw new InvalidMoveException("Null piece or wrong team turn");

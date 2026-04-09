@@ -1,11 +1,13 @@
 package client.websocket;
 
+import chess.ChessMove;
 import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.URI;
 
 import jakarta.websocket.*;
+import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
@@ -50,9 +52,9 @@ public class WebSocketFacade extends Endpoint {
         }
     }
 
-    public void makeMove(String authToken, Integer gameID) throws IOException {
-        sendCommand(new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, gameID));
-    } //maybe change this? see specs. requires extra field?
+    public void makeMove(String authToken, Integer gameID, ChessMove move) throws IOException {
+        sendCommand(new MakeMoveCommand(authToken, gameID, move));
+    }
 
     public void leave(String authToken, Integer gameID) throws IOException {
         sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, gameID));
