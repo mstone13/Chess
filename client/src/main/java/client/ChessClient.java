@@ -260,7 +260,12 @@ public class ChessClient implements ServerMessageObserver {
             currentGamePlay.run(game, null, false, webSocketFacade, authToken);
 
 
-        } catch (Exception _) {}
+        } catch (IOException e) {
+            out.println("Failed to connect to game: " + e.getMessage());
+        } catch (Exception e) {
+            out.println("An unexpected error occured: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void gameplayCommand(String leaveCommand, int gameNum, String authToken, String playerColor) throws IOException {
