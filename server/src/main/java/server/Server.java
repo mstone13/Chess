@@ -73,13 +73,11 @@ public class Server {
     // Register your endpoints and exception handlers here.
 
     private void registerEndpoints() {
-        // CLEAR APPLICATION
         javalin.delete("/db", ctx -> {
             try {
                 userDAO.clearUsers();
                 gameDAO.clearGames();
                 authDAO.clearAuths();
-
                 ctx.status(200);
                 ctx.json(Map.of());
             } catch (DataAccessException e) {
@@ -87,7 +85,6 @@ public class Server {
             }
         });
 
-        // REGISTER USER
         javalin.post("/user", ctx -> {
             RegisterRequest request = ctx.bodyAsClass(RegisterRequest.class);
             try {
@@ -102,7 +99,6 @@ public class Server {
             }
         });
 
-        // USER LOGIN
         javalin.post("/session", ctx -> {
             LoginRequest request = ctx.bodyAsClass(LoginRequest.class);
             try {
@@ -116,33 +112,24 @@ public class Server {
             }
         });
 
-        // USER LOGOUT
         javalin.delete("/session", ctx -> {
             String authToken = ctx.header("Authorization");
             try {
                 userService.logout(authToken);
                 ctx.status(200).json(Map.of());
-            } catch (DataAccessException e) {
-                ctx.status(500).json(Map.of("message", "Error: internal server error"));
-            } catch (RuntimeException e) {
-                ctx.status(401).json(Map.of("message", "Error: unauthorized"));
-            }
+            } catch (Exception e) {
+                handleException(ctx, e);}
         });
 
-        // LIST GAMES
         javalin.get("/game", ctx -> {
             String authToken = ctx.header("Authorization");
             try {
                 ListGamesResult result = gameService.listGames(authToken);
                 ctx.status(200).json(result);
-            } catch (RuntimeException e) {
-                ctx.status(401).json(Map.of("message", "Error: unauthorized"));
-            } catch (DataAccessException e) {
-                ctx.status(500).json(Map.of("message", "Error: " + e.getMessage()));
-            }
+            } catch (Exception e) {
+                handleException(ctx, e);}
         });
 
-        // CREATE GAME
         javalin.post("/game", ctx -> {
             String authToken = ctx.header("Authorization");
             CreateGameRequest request = ctx.bodyAsClass(CreateGameRequest.class);
@@ -152,26 +139,21 @@ public class Server {
             } catch (DataAccessException e) {
                 ctx.status(500).json(Map.of("message", "Error: internal server error"));
             } catch (RuntimeException e) {
-                runtimeExceptionCatch(ctx, e);
-            }
+                runtimeExceptionCatch(ctx, e);}
         });
 
-        // JOIN GAME
         javalin.put("/game", ctx -> {
             try {
                 String authToken = ctx.header("Authorization");
                 JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
-
                 if (request.gameID == null || request.playerColor == null || !validPlayerColor(request.playerColor)) {
                     ctx.status(400).json(Map.of("message", "Error: bad request"));
                     return;
                 }
-
                 AuthData auth = authDAO.getAuth(authToken);
                 if (auth == null) {
                     ctx.status(401).json(Map.of("message", "Error: unauthorized"));
                 }
-
                 String username = authDAO.getAuth(authToken).username();
                 GameData game = gameDAO.getGame(request.gameID);
 
@@ -185,17 +167,22 @@ public class Server {
                 } else {
                     gameService.joinGame(authToken, request);
                 }
-
                 ctx.status(200).json(Map.of());
-
-            } catch (DataAccessException e) {
-              ctx.status(500).json(Map.of("message", "Error: internal server error"));
-            } catch (AlreadyTakenException e) {
-                ctx.status(403).json(Map.of("message", "Error: already taken"));
-            } catch (RuntimeException e) {
-                runtimeExceptionCatch(ctx, e);
-            }
+            } catch (Exception e) {
+                handleException(ctx, e);}
         });
+    }
+
+    private void handleException(Context ctx, Exception e) {
+        if (e instanceof DataAccessException) {
+            ctx.status(500).json(Map.of("message", "Error: internal server error"));
+        } else if (e instanceof AlreadyTakenException) {
+            ctx.status(403).json(Map.of("message", "Error: already taken"));
+        } else if (e instanceof IllegalArgumentException) {
+            ctx.status(400).json(Map.of("message", "Error: bad request"));
+        } else {
+            ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+        }
     }
 
     public boolean validPlayerColor(String playerColor) {
@@ -210,6 +197,8 @@ public class Server {
             ctx.status(401).json(Map.of("message", "Error: unauthorized"));
         }
     }
+
+
 
     public int run(int desiredPort) {
         javalin = Javalin.create(config -> {
@@ -227,7 +216,6 @@ public class Server {
         });
 
         System.out.println("Server running on port " + desiredPort);
-        System.out.println(Endpoint.class.getProtectionDomain().getCodeSource());
         return javalin.port();
     }
 
