@@ -123,7 +123,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
         connections.add(gameID, ctx);
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage(username + " has connected to the game as the " + playerColor);
+        message.setMessage(username + " has connected to the game as the " + playerColor + ".");
         connections.broadcast(gameID, ctx, message);
 
         ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
@@ -136,15 +136,15 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         GameData game = gameDAO.getGame(gameID);
         boolean isPlayer = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
 
-        connections.remove(gameID, ctx);
+        if (isPlayer) {
+            gameService.leaveGame(authToken, gameID);
+        }
 
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         message.setMessage(username + " has left the game.");
 
-        if (isPlayer) {
-            gameService.leaveGame(authToken, gameID);
-        }
         connections.broadcast(gameID, ctx, message);
+        connections.remove(gameID, ctx);
 
     }
 
@@ -165,39 +165,47 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     private void makeMove(String authToken, int gameID, ChessMove move, WsContext ctx) throws DataAccessException,
             InvalidMoveException, IOException {
-        String username = authDAO.getAuth(authToken).username();
+        try {
+            String username = authDAO.getAuth(authToken).username();
 
-        gameService.makeMove(authToken, gameID, move);
+            gameService.makeMove(authToken, gameID, move);
 
-        GameData updatedGame = gameDAO.getGame(gameID);
-        // send load_game to EVERYONE
-        ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
-        loadGame.setGame(updatedGame);
-        connections.broadcast(gameID, null, loadGame);
+            GameData updatedGame = gameDAO.getGame(gameID);
+            // send load_game to EVERYONE
+            ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+            loadGame.setGame(updatedGame);
+            connections.broadcast(gameID, null, loadGame);
 
-        //send move notification to other players ONLY
-        ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage(username + " moved from " + move.getStartPosition() + " to " + move.getEndPosition() +
-                (move.getPromotionPiece() != null ? ", promoting to " + move.getPromotionPiece() : ""));
-        connections.broadcast(gameID, ctx, message);
+            //send move notification to other players ONLY
+            ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            message.setMessage(username + " moved from " + move.getStartPosition() + " to " + move.getEndPosition() +
+                    (move.getPromotionPiece() != null ? ", promoting to " + move.getPromotionPiece() : ""));
+            connections.broadcast(gameID, ctx, message);
 
-        ChessGame game = updatedGame.game();
-        ChessGame.TeamColor opponent = username.equals(updatedGame.whiteUsername())
-                ? ChessGame.TeamColor.BLACK
-                : ChessGame.TeamColor.WHITE;
+            ChessGame game = updatedGame.game();
+            ChessGame.TeamColor opponentColor = username.equals(updatedGame.whiteUsername())
+                    ? ChessGame.TeamColor.BLACK
+                    : ChessGame.TeamColor.WHITE;
 
-        if (game.isInCheckmate(opponent)) {
-            ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-            msg.setMessage("Checkmate!");
-            connections.broadcast(gameID, null, msg);
-        } else if (game.isInStalemate(opponent)) {
-            ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-            msg.setMessage("Stalemate!");
-            connections.broadcast(gameID, null, msg);
-        } else if (game.isInCheck(opponent)) {
-            ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-            msg.setMessage("Check.");
-            connections.broadcast(gameID, null, msg);
+            String opponentUsername = opponentColor == ChessGame.TeamColor.WHITE
+                    ? updatedGame.whiteUsername()
+                    : updatedGame.blackUsername();
+
+            if (game.isInCheckmate(opponentColor)) {
+                ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+                msg.setMessage(opponentUsername + " is in checkmate!");
+                connections.broadcast(gameID, null, msg);
+            } else if (game.isInStalemate(opponentColor)) {
+                ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+                msg.setMessage("Stalemate!");
+                connections.broadcast(gameID, null, msg);
+            } else if (game.isInCheck(opponentColor)) {
+                ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+                msg.setMessage(opponentUsername + " is in check.");
+                connections.broadcast(gameID, null, msg);
+            }
+        } catch (InvalidMoveException e) {
+            sendError(ctx, e.getMessage());
         }
 
     }
@@ -206,5 +214,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
         error.setErrorMessage(message);
         ctx.send(gson.toJson(error));
+
     }
 }

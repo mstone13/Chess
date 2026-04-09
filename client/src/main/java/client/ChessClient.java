@@ -27,14 +27,14 @@ public class ChessClient implements ServerMessageObserver {
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
     private final WebSocketFacade webSocketFacade;
-    private final GamePlay GamePlay;
+    private final GamePlay gamePlay;
     private GamePlay currentGamePlay = null;
 
     public ChessClient() throws Exception {
         String serverUrl = "http://localhost:8080";
         ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
-        this.GamePlay = new GamePlay();
+        this.gamePlay = new GamePlay();
         webSocketFacade = new WebSocketFacade(serverUrl, this);
     }
 
@@ -210,8 +210,8 @@ public class ChessClient implements ServerMessageObserver {
 
             webSocketFacade.connect(authToken, gameNum);
 
-            ChessBoard.run(game, playerColor.toUpperCase(), null, null);
-            currentGamePlay = new GamePlay();
+//            ChessBoard.run(game, playerColor.toUpperCase(), null, null);
+            currentGamePlay = gamePlay;
             String gamePlayAction = currentGamePlay.run(game, playerColor, true, webSocketFacade, authToken);
 
             gameplayCommand(gamePlayAction, gameNum, authToken, playerColor);
@@ -254,10 +254,11 @@ public class ChessClient implements ServerMessageObserver {
 
             webSocketFacade.connect(authToken, gameNum);
 
-            currentGamePlay = new GamePlay();
+            currentGamePlay = gamePlay;
 
             ChessBoard.run(game, "white", null, null);
-            currentGamePlay.run(game, null, false, webSocketFacade, authToken);
+            String gamePlayAction = currentGamePlay.run(game, null, false, webSocketFacade, authToken);
+            gameplayCommand(gamePlayAction, gameNum, authToken, null);
 
 
         } catch (IOException e) {

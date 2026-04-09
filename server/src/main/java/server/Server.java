@@ -150,7 +150,6 @@ public class Server {
                 String username = authDAO.getAuth(authToken).username();
                 GameData game = gameDAO.getGame(request.gameID);
 
-
                 if ("RESIGN".equalsIgnoreCase(request.playerColor)) {
                     gameService.resign(authToken, request.gameID);
                 } else if (request.playerColor == null) {
@@ -170,8 +169,6 @@ public class Server {
                 runtimeExceptionCatch(ctx, e);
             }
         });
-
-
     }
 
     public void runtimeExceptionCatch(Context ctx, RuntimeException e) {

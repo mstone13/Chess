@@ -89,27 +89,7 @@ public class ChessBoard {
             out.print(SET_BG_COLOR_PINK);
         }
 
-        if (piece == null) {
-            out.print("   ");
-            return;
-        }
-
-        String symbol = switch (piece.getPieceType()) {
-            case KING -> "K";
-            case QUEEN -> "Q";
-            case ROOK -> "R";
-            case BISHOP -> "B";
-            case KNIGHT -> "N";
-            case PAWN -> "P";
-        };
-
-        if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
-            out.print(SET_TEXT_COLOR_BLUE);
-        } else {
-            out.print(SET_TEXT_COLOR_RED);
-        }
-
-        out.print(" " + symbol + " ");
+        determineAndPrintPiece(out, piece);
     }
 
     private static void drawLegalMoveSquare(PrintStream out, ChessPiece piece, int row, int col,
@@ -124,6 +104,10 @@ public class ChessBoard {
             return;
         }
 
+        determineAndPrintPiece(out, piece);
+    }
+
+    private static void determineAndPrintPiece(PrintStream out, ChessPiece piece) {
         if (piece == null) {
             out.print("   ");
             return;

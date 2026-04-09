@@ -4,6 +4,7 @@ import chess.*;
 import client.websocket.WebSocketFacade;
 import facade.ServerFacade;
 import model.*;
+import ui.ChessBoard;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +44,9 @@ public class GamePlay {
         switch (result) {
             case "1" -> printHelp(out, playing);
             case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
-            case "4" -> makeMove(out, currentGameData, facade, playerColor, authToken);
+            case "4" -> {
+                makeMove(out, currentGameData, facade, playerColor, authToken);
+            }
             case "6" -> highlightLegalMoves(out, currentGameData, playerColor);
         }
     }
@@ -59,13 +62,16 @@ public class GamePlay {
                          String playerColor, String authToken) {
         try {
             ChessGame.TeamColor teamColor = getTeamColor(playerColor);
-            if (!gameData.game().getTeamTurn().equals(teamColor)) {
 
+            if (gameData.game().isInCheckmate(teamColor) || gameData.game().isInStalemate(teamColor) ||
+            gameData.game().isFinished()) {
+                out.println(SET_TEXT_COLOR_RED + ">> ERROR: The game is over!");
+                out.print(RESET_TEXT_COLOR);
+                return;
+            } else if (!gameData.game().getTeamTurn().equals(teamColor)) {
                 out.println(SET_TEXT_COLOR_RED + ">> ERROR: It's not your turn. Please wait for the other player.");
                 out.print(RESET_TEXT_COLOR);
                 return;
-            } else if (gameData.game().isInCheckmate(teamColor)) {
-
             }
 
             ChessPosition startPos = getStartPos(out);
@@ -73,10 +79,25 @@ public class GamePlay {
             ChessPiece.PieceType promotionPiece = getPromotionPiece(out, startPos, endPos, gameData);
 
             ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
+            Collection<ChessMove> legalMoves = gameData.game().validMoves(move.getStartPosition());
+            if (!legalMoves.contains(move)) {
+                out.println(SET_TEXT_COLOR_RED + ">> ERROR: Illegal move. Enter a valid move.");
+                out.print(RESET_TEXT_COLOR);
+                return;
+            }
+
+            chess.ChessBoard board = gameData.game().getBoard();
+            if (board.getPiece(startPos).getTeamColor() != teamColor) {
+                out.println(SET_TEXT_COLOR_RED + ">> ERROR: Select a piece of your team color!");
+                out.print(RESET_TEXT_COLOR);
+                return;
+            }
 
             facade.makeMove(authToken, gameData.gameID(), move);
 
-        } catch (Exception e) {
+
+        }
+        catch (Exception e) {
             out.println("Error sending move: " + e.getMessage());
         }
     }
@@ -93,47 +114,20 @@ public class GamePlay {
     }
 
     public ChessPosition getStartPos(PrintStream out) {
-        boolean needToLoop = true;
-        int row = 0;
-        int col = 0;
-
-        out.println("Please enter a piece:");
-        while (needToLoop) {
-            out.println("Enter the row of a piece [1-8]: ");
-            try {
-                row = Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException e) {
-                out.println("Please input a valid integer for row");
-                continue;
-            }
-
-            out.println("Enter the column of a piece [a-h]: ");
-            String inputLine = scanner.nextLine().toLowerCase();
-            if (inputLine.length() != 1) {
-                out.println("Please input a single character for column [a-h].");
-                continue;
-            }
-            char input = inputLine.charAt(0);
-            col = input - 'a' + 1;
-
-            if (row < 1 || row > 8 || col < 1 || col > 8) {
-                out.println("Please input a valid row [1-8] and col [a-h].");
-            } else {
-                needToLoop = false;
-            }
-        }
-
-        return new ChessPosition(row, col);
+        return getPosition(out, "Please enter end position: ");
     }
 
     public ChessPosition getEndPos(PrintStream out) {
-        boolean needToLoop = true;
-        int row = 0;
-        int col = 0;
+        return getPosition(out, "Please enter a piece: ");
+    }
 
-        out.println("Please enter end position:");
-        while (needToLoop) {
-            out.println("Enter the row of the desired end position [1-8]: ");
+    private ChessPosition getPosition(PrintStream out, String prompt) {
+        int row, col;
+
+        out.println(prompt);
+
+        while (true) {
+            out.println("Enter the row [1-8]: ");
             try {
                 row = Integer.parseInt(scanner.nextLine());
             } catch (NumberFormatException e) {
@@ -141,23 +135,24 @@ public class GamePlay {
                 continue;
             }
 
-            out.println("Enter the column of the desired end position [a-h]: ");
+            out.println("Enter the column [a-h]: ");
             String inputLine = scanner.nextLine().toLowerCase();
+
             if (inputLine.length() != 1) {
                 out.println("Please input a single character for column [a-h].");
                 continue;
             }
+
             char input = inputLine.charAt(0);
             col = input - 'a' + 1;
 
             if (row < 1 || row > 8 || col < 1 || col > 8) {
                 out.println("Please input a valid row [1-8] and col [a-h].");
-            } else {
-                needToLoop = false;
+                continue;
             }
-        }
 
-        return new ChessPosition(row, col);
+            return new ChessPosition(row, col);
+        }
     }
 
     public ChessPiece.PieceType getPromotionPiece(PrintStream out, ChessPosition startPos, ChessPosition endPos,

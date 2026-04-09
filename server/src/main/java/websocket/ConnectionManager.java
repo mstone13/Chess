@@ -28,7 +28,8 @@ public class ConnectionManager {
 
     public void broadcast(Integer gameID, WsContext excludeCtx, ServerMessage msg) throws IOException {
         Set<WsContext> sessions = connections.get(gameID);
-        if (sessions == null) return;
+        if (sessions == null) {
+            return; }
 
         String json = gson.toJson(msg);
 
