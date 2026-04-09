@@ -75,12 +75,16 @@ public class Server {
     private void registerEndpoints() {
         // CLEAR APPLICATION
         javalin.delete("/db", ctx -> {
-            userDAO.clearUsers();
-            gameDAO.clearGames();
-            authDAO.clearAuths();
+            try {
+                userDAO.clearUsers();
+                gameDAO.clearGames();
+                authDAO.clearAuths();
 
-            ctx.status(200);
-            ctx.json(Map.of());
+                ctx.status(200);
+                ctx.json(Map.of());
+            } catch (DataAccessException e) {
+                ctx.status(500).json(Map.of("message", "Error: internal server error"));
+            }
         });
 
         // REGISTER USER
@@ -89,6 +93,8 @@ public class Server {
             try {
                 UserResult result = userService.register(request);
                 ctx.status(200).json(result);
+            } catch (DataAccessException e) {
+                ctx.status(500).json(Map.of("message", "Error: internal server error"));
             } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
             } catch (RuntimeException e) {
@@ -102,7 +108,10 @@ public class Server {
             try {
                 UserResult result = userService.login(request);
                 ctx.status(200).json(result);
-            } catch (RuntimeException e) {
+            } catch (DataAccessException e) {
+                ctx.status(500).json(Map.of("message", "Error: internal server error"));
+            }
+            catch (RuntimeException e) {
                 runtimeExceptionCatch(ctx, e);
             }
         });
@@ -113,6 +122,8 @@ public class Server {
             try {
                 userService.logout(authToken);
                 ctx.status(200).json(Map.of());
+            } catch (DataAccessException e) {
+                ctx.status(500).json(Map.of("message", "Error: internal server error"));
             } catch (RuntimeException e) {
                 ctx.status(401).json(Map.of("message", "Error: unauthorized"));
             }
@@ -138,15 +149,29 @@ public class Server {
             try {
                 CreateGameResult result = gameService.createGame(authToken, request);
                 ctx.status(200).json(result);
+            } catch (DataAccessException e) {
+                ctx.status(500).json(Map.of("message", "Error: internal server error"));
             } catch (RuntimeException e) {
                 runtimeExceptionCatch(ctx, e);
             }
         });
+
         // JOIN GAME
         javalin.put("/game", ctx -> {
-            String authToken = ctx.header("Authorization");
             try {
+                String authToken = ctx.header("Authorization");
                 JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
+
+                if (request.gameID == null || request.playerColor == null || !validPlayerColor(request.playerColor)) {
+                    ctx.status(400).json(Map.of("message", "Error: bad request"));
+                    return;
+                }
+
+                AuthData auth = authDAO.getAuth(authToken);
+                if (auth == null) {
+                    ctx.status(401).json(Map.of("message", "Error: unauthorized"));
+                }
+
                 String username = authDAO.getAuth(authToken).username();
                 GameData game = gameDAO.getGame(request.gameID);
 
@@ -163,12 +188,19 @@ public class Server {
 
                 ctx.status(200).json(Map.of());
 
+            } catch (DataAccessException e) {
+              ctx.status(500).json(Map.of("message", "Error: internal server error"));
             } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
             } catch (RuntimeException e) {
                 runtimeExceptionCatch(ctx, e);
             }
         });
+    }
+
+    public boolean validPlayerColor(String playerColor) {
+        return (playerColor.equalsIgnoreCase("WHITE") || playerColor.equalsIgnoreCase("BLACK")
+                || playerColor.equalsIgnoreCase("RESIGN"));
     }
 
     public void runtimeExceptionCatch(Context ctx, RuntimeException e) {
