@@ -98,7 +98,7 @@ public class ServerFacade {
     }
 
     public void joinGame(String authToken, int gameNum, String playerColor) {
-        JoinGameRequest request = new JoinGameRequest(playerColor, gameNum, "JOIN");
+        JoinGameRequest request = new JoinGameRequest(playerColor, gameNum);
         String jsonRequest = serializer.toJson(request);
 
         String jsonResponse = communicator.sendPutRequest("/game", jsonRequest, authToken);
@@ -114,23 +114,19 @@ public class ServerFacade {
     }
 
     public void leaveGame(String authToken, int gameNum) {
-        JoinGameRequest request = new JoinGameRequest(null, gameNum, "LEAVE");
+        JoinGameRequest request = new JoinGameRequest(null, gameNum);
         String jsonRequest = serializer.toJson(request);
 
         communicator.sendPutRequest("/game", jsonRequest, authToken);
     }
 
     public void resign(String authToken, int gameNum) {
-        JoinGameRequest request = new JoinGameRequest(null, gameNum, "RESIGN");
+        JoinGameRequest request = new JoinGameRequest(null, gameNum);
         String jsonRequest = serializer.toJson(request);
 
         communicator.sendPutRequest("/game", jsonRequest, authToken);
     }
 
-    public void makeMove(String authToken, int gameID, ChessPosition startPos, ChessPosition endPos,
-                         ChessPiece.PieceType promotionPiece) {
-
-    }
 
     public void clearApplication() {
         communicator.sendDeleteRequest("/db", null);

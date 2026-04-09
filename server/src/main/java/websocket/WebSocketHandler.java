@@ -38,30 +38,52 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     @Override
     public void handleMessage(@NotNull WsMessageContext ctx) {
-        int gameID = -1;
-
         try {
             UserGameCommand command = serializer.fromJson(ctx.message(), UserGameCommand.class);
-            gameID = command.getGameID();
+
+            if (command == null) {
+                sendError(ctx, "Error: bad request");
+                return;
+            }
+
+            Integer gameID = command.getGameID();
+            if (gameID == null) {
+                sendError(ctx, "Error: bad request");
+                return;
+            }
+
             connections.saveSession(gameID, ctx);
 
             switch (command.getCommandType()) {
-                case CONNECT -> connect(command.getAuthToken(), command.getGameID(), ctx);
+                case CONNECT -> connect(command.getAuthToken(), gameID, ctx);
+
                 case MAKE_MOVE -> {
                     MakeMoveCommand moveCommand = gson.fromJson(ctx.message(), MakeMoveCommand.class);
+
+                    if (moveCommand == null || moveCommand.getMove() == null) {
+                        sendError(ctx, "Error: bad request");
+                        return;
+                    }
+
                     try {
                         makeMove(moveCommand.getAuthToken(), moveCommand.getGameID(), moveCommand.getMove(), ctx);
                     } catch (InvalidMoveException e) {
                         sendError(ctx, e.getMessage());
                     }
                 }
-                case LEAVE -> leave(command.getAuthToken(), command.getGameID(), ctx);
-                case RESIGN -> resign(command.getAuthToken(), command.getGameID(), ctx);
+                case LEAVE -> leave(command.getAuthToken(), gameID, ctx);
+                case RESIGN -> resign(command.getAuthToken(), gameID, ctx);
+
+
+                default -> sendError(ctx, "Error: bad request");
             }
-        } catch (RuntimeException ex) {
-            throw new RuntimeException(ex.getMessage());
-        } catch (Exception ex) {
-            ex.printStackTrace();
+
+        } catch (Exception e) {
+            try {
+                sendError(ctx, "Error: " + e.getMessage());
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
     }
 
@@ -73,20 +95,40 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     public void connect(String authToken, int gameID, WsContext ctx) throws IOException, DataAccessException {
-        String username = authDAO.getAuth(authToken).username();
-        String playerColor;
+        var auth = authDAO.getAuth(authToken);
+
+        if (auth == null) {
+            sendError(ctx, "Error: unauthorized");
+            return;
+        }
+
         GameData gameData = gameDAO.getGame(gameID);
+
+        if (gameData == null) {
+            sendError(ctx, "Error: bad request");
+            return;
+        }
+
+        String username = auth.username();
+        String playerColor;
+
 
         if (username.equals(gameData.blackUsername())) {
             playerColor = "black player";
-        } else {
+        } else if (username.equals(gameData.whiteUsername())){
             playerColor = "white player";
+        } else {
+            playerColor = "observer";
         }
 
         connections.add(gameID, ctx);
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         message.setMessage(username + " has connected to the game as the " + playerColor);
         connections.broadcast(gameID, ctx, message);
+
+        ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+        loadGame.setGame(gameData);
+        ctx.send(gson.toJson(loadGame));
     }
 
     private void leave(String authToken, int gameID, WsContext ctx) throws DataAccessException, IOException {

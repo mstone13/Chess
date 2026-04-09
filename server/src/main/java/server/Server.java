@@ -4,6 +4,7 @@ import chess.InvalidMoveException;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
+import io.javalin.router.Endpoint;
 import model.*;
 import io.javalin.json.JavalinGson;
 import service.GameService;
@@ -148,18 +149,9 @@ public class Server {
         javalin.put("/game", ctx -> {
             String authToken = ctx.header("Authorization");
 
-            Map<String, Object> body = ctx.bodyAsClass(Map.class);
-            String action = (String) body.get("action");
-
             try {
                 JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
-
-                switch (action.toUpperCase()) {
-                    case "LEAVE" -> gameService.leaveGame(authToken, request.gameID);
-                    case "RESIGN" -> gameService.resign(authToken, request.gameID);
-                    case "JOIN" -> gameService.joinGame(authToken, request);
-                    default -> throw new RuntimeException("Invalid action: " + action);
-                }
+                gameService.joinGame(authToken, request);
                 ctx.status(200).json(Map.of());
             } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
@@ -193,6 +185,7 @@ public class Server {
         });
 
         System.out.println("Server running on port " + desiredPort);
+        System.out.println(Endpoint.class.getProtectionDomain().getCodeSource());
         return javalin.port();
     }
 

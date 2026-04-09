@@ -28,6 +28,7 @@ public class ChessClient implements ServerMessageObserver {
     private final ServerFacade facade;
     private final WebSocketFacade webSocketFacade;
     private final GamePlay GamePlay;
+    private GamePlay currentGamePlay = null;
 
     public ChessClient() throws Exception {
         String serverUrl = "http://localhost:8080";
@@ -209,8 +210,9 @@ public class ChessClient implements ServerMessageObserver {
 
             webSocketFacade.connect(authToken, gameNum);
 
-            ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
-            String gamePlayAction = GamePlay.run(game, playerColor, true, webSocketFacade, authToken);
+            ChessBoard.run(game, playerColor.toUpperCase(), null, null);
+            currentGamePlay = new GamePlay();
+            String gamePlayAction = currentGamePlay.run(game, playerColor, true, webSocketFacade, authToken);
 
             gameplayCommand(gamePlayAction, gameNum, authToken);
 
@@ -252,8 +254,11 @@ public class ChessClient implements ServerMessageObserver {
 
             webSocketFacade.connect(authToken, gameNum);
 
+            currentGamePlay = new GamePlay();
+
             ChessBoard.run(game, "white", null, null);
-            GamePlay.run(game, "white", false, webSocketFacade, authToken);
+            currentGamePlay.run(game, null, false, webSocketFacade, authToken);
+
 
         } catch (Exception _) {}
     }
@@ -274,7 +279,11 @@ public class ChessClient implements ServerMessageObserver {
     public void notify(ServerMessage message) {
         PrintStream out = System.out;
         switch (message.getServerMessageType()) {
-            case LOAD_GAME -> handleLoadGame(out, message);
+            case LOAD_GAME -> {
+                GameData updatedGameData = message.getGame();
+                currentGamePlay.updateGameData(updatedGameData);
+                handleLoadGame(out, message);
+            }
             case NOTIFICATION -> handleNotification(out, message);
             case ERROR -> handleError(out, message);
         }

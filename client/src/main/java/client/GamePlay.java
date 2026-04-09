@@ -14,11 +14,13 @@ import static ui.EscapeSequences.*;
 
 public class GamePlay {
     private final Scanner scanner = new Scanner(System.in);
+    private GameData currentGameData;
 
     public GamePlay() {}
 
     public String run(GameData game, String playerColor, boolean playing,
                       WebSocketFacade facade, String authToken) throws InvalidMoveException {
+        this.currentGameData = game;
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         var result = "";
@@ -26,7 +28,7 @@ public class GamePlay {
         while (!result.equals("2") && !result.equals("5")){
             printMenu(out, playing);
             result = scanner.nextLine();
-            directAction(out, result, game, playerColor, playing, facade, authToken);
+            directAction(out, result, playerColor, playing, facade, authToken);
         }
 
         if (result.equals("5")) {
@@ -36,13 +38,13 @@ public class GamePlay {
         }
     }
 
-    public void directAction(PrintStream out, String result, GameData game, String playerColor, boolean playing,
+    public void directAction(PrintStream out, String result, String playerColor, boolean playing,
                                 WebSocketFacade facade, String authToken) throws InvalidMoveException {
         switch (result) {
             case "1" -> printHelp(out, playing);
-            case "3" -> ui.ChessBoard.run(game, playerColor.toUpperCase(), null, null);
-            case "4" -> makeMove(out, game, facade, playerColor, authToken);
-            case "6" -> highlightLegalMoves(out, game, playerColor);
+            case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+            case "4" -> makeMove(out, currentGameData, facade, playerColor, authToken);
+            case "6" -> highlightLegalMoves(out, currentGameData, playerColor);
         }
     }
 
@@ -56,10 +58,14 @@ public class GamePlay {
     public void makeMove(PrintStream out, GameData gameData, WebSocketFacade facade,
                          String playerColor, String authToken) {
         try {
-            if(!confirmTurn(playerColor, gameData)) {
+            ChessGame.TeamColor teamColor = getTeamColor(playerColor);
+            if (!gameData.game().getTeamTurn().equals(teamColor)) {
+
                 out.println(SET_TEXT_COLOR_RED + ">> ERROR: It's not your turn. Please wait for the other player.");
                 out.print(RESET_TEXT_COLOR);
                 return;
+            } else if (gameData.game().isInCheckmate(teamColor)) {
+
             }
 
             ChessPosition startPos = getStartPos(out);
@@ -75,15 +81,15 @@ public class GamePlay {
         }
     }
 
-    public boolean confirmTurn(String playerColor, GameData gameData) {
-        ChessGame.TeamColor actualColor = null;
-        if (playerColor.equalsIgnoreCase("white")) {
-            actualColor = ChessGame.TeamColor.WHITE;
-        } else {
-            actualColor = ChessGame.TeamColor.BLACK;
-        }
 
-        return gameData.game().getTeamTurn().equals(actualColor);
+    public ChessGame.TeamColor getTeamColor(String playerColor) {
+        ChessGame.TeamColor teamColor = null;
+        if (playerColor.equalsIgnoreCase("white")) {
+            teamColor = ChessGame.TeamColor.WHITE;
+        } else {
+            teamColor = ChessGame.TeamColor.BLACK;
+        }
+        return teamColor;
     }
 
     public ChessPosition getStartPos(PrintStream out) {
@@ -188,6 +194,10 @@ public class GamePlay {
             }
         }
         return promotionPiece;
+    }
+
+    public void updateGameData(GameData updatedGame) {
+        this.currentGameData = updatedGame;
     }
 
     public void printHelp(PrintStream out, boolean playing) {

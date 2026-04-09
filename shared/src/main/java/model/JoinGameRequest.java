@@ -7,9 +7,8 @@ public class JoinGameRequest {
 
     public JoinGameRequest() {}
 
-    public JoinGameRequest(String playerColor, int gameID, String action) {
+    public JoinGameRequest(String playerColor, int gameID) {
         this.playerColor = playerColor;
         this.gameID = gameID;
-        this.action = action;
     }
 }
