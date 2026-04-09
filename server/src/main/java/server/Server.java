@@ -1,6 +1,5 @@
 package server;
 
-import chess.InvalidMoveException;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
@@ -10,7 +9,6 @@ import io.javalin.json.JavalinGson;
 import service.GameService;
 import service.UserService;
 import websocket.WebSocketHandler;
-import websocket.commands.MakeMoveCommand;
 
 import java.util.Map;
 
@@ -144,21 +142,36 @@ public class Server {
                 runtimeExceptionCatch(ctx, e);
             }
         });
-
         // JOIN GAME
         javalin.put("/game", ctx -> {
             String authToken = ctx.header("Authorization");
-
             try {
                 JoinGameRequest request = ctx.bodyAsClass(JoinGameRequest.class);
-                gameService.joinGame(authToken, request);
+                String username = authDAO.getAuth(authToken).username();
+                GameData game = gameDAO.getGame(request.gameID);
+
+
+                if ("RESIGN".equalsIgnoreCase(request.playerColor)) {
+                    gameService.resign(authToken, request.gameID);
+                } else if (request.playerColor == null) {
+                    gameService.leaveGame(authToken, request.gameID);
+                } else if ((request.playerColor.equalsIgnoreCase("WHITE") && username.equals(game.whiteUsername())) ||
+                        (request.playerColor.equalsIgnoreCase("BLACK") && username.equals(game.blackUsername()))) {
+                    gameService.leaveGame(authToken, request.gameID);
+                } else {
+                    gameService.joinGame(authToken, request);
+                }
+
                 ctx.status(200).json(Map.of());
+
             } catch (AlreadyTakenException e) {
                 ctx.status(403).json(Map.of("message", "Error: already taken"));
             } catch (RuntimeException e) {
                 runtimeExceptionCatch(ctx, e);
             }
         });
+
+
     }
 
     public void runtimeExceptionCatch(Context ctx, RuntimeException e) {

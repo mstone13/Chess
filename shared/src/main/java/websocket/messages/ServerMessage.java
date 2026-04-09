@@ -13,6 +13,7 @@ import java.util.Objects;
 public class ServerMessage {
     ServerMessageType serverMessageType;
 
+    private String errorMessage;
     private String message;
     private GameData game;
 
@@ -44,6 +45,10 @@ public class ServerMessage {
 
     public void setGame(GameData game) {
         this.game = game;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
     @Override

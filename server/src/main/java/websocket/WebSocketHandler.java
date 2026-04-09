@@ -1,5 +1,6 @@
 package websocket;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
@@ -18,10 +19,10 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     private final ConnectionManager connections = new ConnectionManager();
     private final Gson serializer = new Gson();
-    private AuthDAO authDAO;
-    private GameDAO gameDAO;
-    private Gson gson;
-    private GameService gameService;
+    private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
+    private final Gson gson;
+    private final GameService gameService;
 
     public WebSocketHandler(GameService gameService, AuthDAO authDAO, GameDAO gameDAO) {
         this.authDAO = authDAO;
@@ -56,7 +57,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command.getAuthToken(), gameID, ctx);
-
                 case MAKE_MOVE -> {
                     MakeMoveCommand moveCommand = gson.fromJson(ctx.message(), MakeMoveCommand.class);
 
@@ -133,20 +133,34 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     private void leave(String authToken, int gameID, WsContext ctx) throws DataAccessException, IOException {
         String username = authDAO.getAuth(authToken).username();
+        GameData game = gameDAO.getGame(gameID);
+        boolean isPlayer = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
 
         connections.remove(gameID, ctx);
+
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         message.setMessage(username + " has left the game.");
+
+        if (isPlayer) {
+            gameService.leaveGame(authToken, gameID);
+        }
         connections.broadcast(gameID, ctx, message);
+
     }
 
     private void resign(String authToken, int gameID, WsContext ctx) throws DataAccessException, IOException {
+        ChessGame game = gameDAO.getGame(gameID).game();
+        if (game.isFinished()) {
+            sendError(ctx, "Error: You cannot resign from a game that is finished.");
+        }
+
+        gameService.resign(authToken, gameID);
+
         String username = authDAO.getAuth(authToken).username();
 
-        connections.remove(gameID, ctx);
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage(username + " has forfeit the game.");
-        connections.broadcast(gameID, ctx, message);
+        message.setMessage(username + " has resigned from the game.");
+        connections.broadcast(gameID, null, message);
     }
 
     private void makeMove(String authToken, int gameID, ChessMove move, WsContext ctx) throws DataAccessException,
@@ -155,21 +169,42 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
         gameService.makeMove(authToken, gameID, move);
 
+        GameData updatedGame = gameDAO.getGame(gameID);
+        // send load_game to EVERYONE
+        ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+        loadGame.setGame(updatedGame);
+        connections.broadcast(gameID, null, loadGame);
+
+        //send move notification to other players ONLY
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
         message.setMessage(username + " moved from " + move.getStartPosition() + " to " + move.getEndPosition() +
                 (move.getPromotionPiece() != null ? ", promoting to " + move.getPromotionPiece() : ""));
         connections.broadcast(gameID, ctx, message);
 
-        GameData updatedGame = gameDAO.getGame(gameID);
+        ChessGame game = updatedGame.game();
+        ChessGame.TeamColor opponent = username.equals(updatedGame.whiteUsername())
+                ? ChessGame.TeamColor.BLACK
+                : ChessGame.TeamColor.WHITE;
 
-        ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
-        loadGame.setGame(updatedGame);
-        connections.broadcast(gameID, null, loadGame);
+        if (game.isInCheckmate(opponent)) {
+            ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            msg.setMessage("Checkmate!");
+            connections.broadcast(gameID, null, msg);
+        } else if (game.isInStalemate(opponent)) {
+            ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            msg.setMessage("Stalemate!");
+            connections.broadcast(gameID, null, msg);
+        } else if (game.isInCheck(opponent)) {
+            ServerMessage msg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            msg.setMessage("Check.");
+            connections.broadcast(gameID, null, msg);
+        }
+
     }
 
     private void sendError(WsContext ctx, String message) throws IOException {
         ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
-        error.setMessage(message);
+        error.setErrorMessage(message);
         ctx.send(gson.toJson(error));
     }
 }

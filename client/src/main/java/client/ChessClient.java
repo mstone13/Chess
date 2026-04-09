@@ -214,7 +214,7 @@ public class ChessClient implements ServerMessageObserver {
             currentGamePlay = new GamePlay();
             String gamePlayAction = currentGamePlay.run(game, playerColor, true, webSocketFacade, authToken);
 
-            gameplayCommand(gamePlayAction, gameNum, authToken);
+            gameplayCommand(gamePlayAction, gameNum, authToken, playerColor);
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -263,9 +263,9 @@ public class ChessClient implements ServerMessageObserver {
         } catch (Exception _) {}
     }
 
-    public void gameplayCommand(String leaveCommand, int gameNum, String authToken) throws IOException {
+    public void gameplayCommand(String leaveCommand, int gameNum, String authToken, String playerColor) throws IOException {
         if (leaveCommand.equalsIgnoreCase("leave")) {
-            facade.leaveGame(authToken, gameNum);
+            facade.leaveGame(authToken, gameNum, playerColor);
             webSocketFacade.leave(authToken, gameNum);
             System.out.println("You have left the game.");
         } else {

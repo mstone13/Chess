@@ -3,7 +3,6 @@ package model;
 public class JoinGameRequest {
     public String playerColor;
     public int gameID;
-    public String action;
 
     public JoinGameRequest() {}
 

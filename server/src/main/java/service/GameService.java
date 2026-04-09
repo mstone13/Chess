@@ -88,8 +88,8 @@ public class GameService {
            } else {
                throw new AlreadyTakenException("Error: already taken");
            }
-
        gameDAO.updateGame(updatedGame);
+
     }
 
     public void leaveGame(String authToken, int gameID) throws DataAccessException {
@@ -230,13 +230,4 @@ public class GameService {
         }
     }
 
-    public GameData getGame(int gameID) throws DataAccessException {
-        GameData game = gameDAO.getGame(gameID);
-
-        if (game == null) {
-            throw new RuntimeException("Error: game does not exist");
-        }
-
-        return game;
-    }
 }
