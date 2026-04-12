@@ -35,7 +35,9 @@ public class ConnectionManager {
 
         for (WsContext ctx : sessions) {
             if (excludeCtx == null || !ctx.equals(excludeCtx)) {
-                ctx.send(json);
+                if (ctx.session.isOpen()) {
+                    ctx.send(json);
+                }
             }
         }
     }

@@ -35,6 +35,16 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void handleConnect(WsConnectContext ctx) {
         System.out.println("Websocket connected");
         ctx.enableAutomaticPings();
+
+        try {
+            Integer gameID = Integer.parseInt(ctx.pathParam("gameID"));
+            connections.add(gameID, ctx);
+
+            System.out.println("Added connection for game " + gameID);
+
+        } catch (Exception e) {
+            System.out.println("Failed to get gameID on connect");
+        }
     }
 
     @Override
@@ -53,7 +63,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 return;
             }
 
-            connections.saveSession(gameID, ctx);
+//            connections.saveSession(gameID, ctx);
 
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command.getAuthToken(), gameID, ctx);
@@ -91,7 +101,8 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void handleClose(@NotNull WsCloseContext ctx) {
         System.out.println("Websocket closed");
 
-        connections.connections.values().forEach(set -> set.remove(ctx));
+        Integer gameID = Integer.parseInt(ctx.pathParam("gameID"));
+        connections.remove(gameID, ctx);
     }
 
     public void connect(String authToken, int gameID, WsContext ctx) throws IOException, DataAccessException {

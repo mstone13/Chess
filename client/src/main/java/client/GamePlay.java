@@ -6,6 +6,7 @@ import facade.ServerFacade;
 import model.*;
 import ui.ChessBoard;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -16,55 +17,61 @@ import static ui.EscapeSequences.*;
 public class GamePlay {
     private final Scanner scanner = new Scanner(System.in);
     private GameData currentGameData;
+    private boolean gameFinished = false;
 
     public GamePlay() {}
 
-    public String run(GameData game, String playerColor, boolean playing,
-                      WebSocketFacade facade, String authToken) throws InvalidMoveException {
+    public void run(GameData game, String playerColor, boolean playing,
+                      WebSocketFacade facade, String authToken) throws InvalidMoveException, IOException {
         this.currentGameData = game;
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         var result = "";
 
-        while (!result.equals("2") && !result.equals("5")){
+        while (!result.equals("2")){
             printMenu(out, playing);
             result = scanner.nextLine();
             directAction(out, result, playerColor, playing, facade, authToken);
         }
-
-        if (result.equals("5")) {
-            return "RESIGN";
-        } else {
-            return "LEAVE";
-        }
     }
 
     public void directAction(PrintStream out, String result, String playerColor, boolean playing,
-                                WebSocketFacade facade, String authToken) throws InvalidMoveException {
-        switch (result) {
-            case "1" -> printHelp(out, playing);
-            case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
-            case "4" -> {
-                makeMove(out, currentGameData, facade, playerColor, authToken);
+                                WebSocketFacade facade, String authToken) throws InvalidMoveException, IOException {
+        if (playing) {
+            switch (result) {
+                case "1" -> printHelp(out, playing);
+                case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+                case "4" -> makeMove(out, currentGameData, facade, playerColor, authToken);
+                case "5" -> resign(out, currentGameData, facade, authToken);
+                case "6" -> highlightLegalMoves(out, currentGameData, playerColor);
             }
-            case "6" -> highlightLegalMoves(out, currentGameData, playerColor);
+        } else {
+            switch (result) {
+                case "1" -> printHelp(out, playing);
+                case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+                case "4" -> highlightLegalMoves(out, currentGameData, playerColor);
+            }
         }
     }
 
     public void highlightLegalMoves(PrintStream out, GameData game, String playerColor) {
-        ChessPosition pos = getStartPos(out);
-        Collection<ChessMove> legalMoves = new ChessGame().validMoves(pos);
+        ChessPosition pos = getPosition(out, "Please enter a piece: ");
+        Collection<ChessMove> legalMoves = game.game().validMoves(pos);
+
+        if (playerColor == null) {
+            playerColor = "white";
+        }
 
         ui.ChessBoard.run(game, playerColor, legalMoves, pos);
     }
 
-    public void makeMove(PrintStream out, GameData gameData, WebSocketFacade facade,
+    public void makeMove(PrintStream out, GameData gameData, WebSocketFacade wsFacade,
                          String playerColor, String authToken) {
         try {
             ChessGame.TeamColor teamColor = getTeamColor(playerColor);
 
             if (gameData.game().isInCheckmate(teamColor) || gameData.game().isInStalemate(teamColor) ||
-            gameData.game().isFinished()) {
+            gameData.game().isFinished() || gameFinished) {
                 out.println(SET_TEXT_COLOR_RED + ">> ERROR: The game is over!");
                 out.print(RESET_TEXT_COLOR);
                 return;
@@ -74,8 +81,8 @@ public class GamePlay {
                 return;
             }
 
-            ChessPosition startPos = getStartPos(out);
-            ChessPosition endPos = getEndPos(out);
+            ChessPosition startPos = getPosition(out, "Please enter a piece: ");
+            ChessPosition endPos = getPosition(out, "Please enter end position: ");
             ChessPiece.PieceType promotionPiece = getPromotionPiece(out, startPos, endPos, gameData);
 
             ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
@@ -93,12 +100,10 @@ public class GamePlay {
                 return;
             }
 
-            facade.makeMove(authToken, gameData.gameID(), move);
-
-
+            wsFacade.makeMove(authToken, gameData.gameID(), move);
         }
         catch (Exception e) {
-            out.println("Error sending move: " + e.getMessage());
+            out.println(SET_TEXT_COLOR_RED + " >> ERROR: " );
         }
     }
 
@@ -111,14 +116,6 @@ public class GamePlay {
             teamColor = ChessGame.TeamColor.BLACK;
         }
         return teamColor;
-    }
-
-    public ChessPosition getStartPos(PrintStream out) {
-        return getPosition(out, "Please enter end position: ");
-    }
-
-    public ChessPosition getEndPos(PrintStream out) {
-        return getPosition(out, "Please enter a piece: ");
     }
 
     private ChessPosition getPosition(PrintStream out, String prompt) {
@@ -191,6 +188,21 @@ public class GamePlay {
         return promotionPiece;
     }
 
+    public void resign(PrintStream out, GameData gameData, WebSocketFacade wsFacade, String authToken) throws IOException {
+        if (gameFinished) {
+            out.println(SET_TEXT_COLOR_RED + ">> ERROR: The game is already finished, you can't resign now!");
+            out.print(RESET_TEXT_COLOR);
+            return;
+        }
+
+        ChessGame game = gameData.game();
+        game.finishGame();
+        updateGameData(gameData);
+
+        gameFinished = true;
+        wsFacade.resign(authToken, gameData.gameID());
+    }
+
     public void updateGameData(GameData updatedGame) {
         this.currentGameData = updatedGame;
     }
@@ -210,6 +222,8 @@ public class GamePlay {
             out.print("""
                     >> Leave: Pretty much you can only go back to the menu.
                     >> Join a game if you want more to do.
+                    >> Redraw chess board: Redraws the board of the chess game being played/observed
+                    >> Highlight legal moves: Legal moves for a selected piece are highlighted on the board.
                     """);
         }
 
@@ -231,6 +245,8 @@ public class GamePlay {
             out.print("""
                     >> 1. Help
                     >> 2. Leave
+                    >> 3. Redraw chess board
+                    >> 4. Highlight legal moves
                     """);
         }
     }

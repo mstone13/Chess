@@ -210,11 +210,10 @@ public class ChessClient implements ServerMessageObserver {
 
             webSocketFacade.connect(authToken, gameNum);
 
-//            ChessBoard.run(game, playerColor.toUpperCase(), null, null);
             currentGamePlay = gamePlay;
-            String gamePlayAction = currentGamePlay.run(game, playerColor, true, webSocketFacade, authToken);
+            currentGamePlay.run(game, playerColor, true, webSocketFacade, authToken);
 
-            gameplayCommand(gamePlayAction, gameNum, authToken, playerColor);
+            leaveGame(gameNum, authToken, playerColor);
 
         } catch (Exception e) {
             if (e.getMessage().contains("input")){
@@ -257,8 +256,8 @@ public class ChessClient implements ServerMessageObserver {
             currentGamePlay = gamePlay;
 
             ChessBoard.run(game, "white", null, null);
-            String gamePlayAction = currentGamePlay.run(game, null, false, webSocketFacade, authToken);
-            gameplayCommand(gamePlayAction, gameNum, authToken, null);
+            currentGamePlay.run(game, null, false, webSocketFacade, authToken);
+            leaveGame(gameNum, authToken, null);
 
 
         } catch (IOException e) {
@@ -269,16 +268,11 @@ public class ChessClient implements ServerMessageObserver {
         }
     }
 
-    public void gameplayCommand(String leaveCommand, int gameNum, String authToken, String playerColor) throws IOException {
-        if (leaveCommand.equalsIgnoreCase("leave")) {
-            facade.leaveGame(authToken, gameNum, playerColor);
-            webSocketFacade.leave(authToken, gameNum);
-            System.out.println("You have left the game.");
-        } else {
-            facade.resign(authToken, gameNum);
-            webSocketFacade.resign(authToken, gameNum);
-            System.out.println("You have forfeit the game.");
-        }
+    public void leaveGame(int gameNum, String authToken, String playerColor) throws IOException {
+
+        facade.leaveGame(authToken, gameNum, playerColor);
+        webSocketFacade.leave(authToken, gameNum);
+        System.out.println("You have left the game.");
     }
 
     @Override
@@ -306,7 +300,6 @@ public class ChessClient implements ServerMessageObserver {
         ChessGame game = gameData.game();
         ChessGame.TeamColor currentTurn = game.getTeamTurn();
         out.println(SET_TEXT_BOLD);
-        out.println("Current board:" + RESET_TEXT_BOLD_FAINT);
 
         String playerColor;
         if (username.equalsIgnoreCase(gameData.whiteUsername())) {
@@ -318,14 +311,13 @@ public class ChessClient implements ServerMessageObserver {
         }
 
         ChessBoard.run(gameData, playerColor, null, null);
-        out.println(SET_TEXT_COLOR_BLUE + "Turn: " + currentTurn);
+        out.print(SET_TEXT_COLOR_BLUE + "Turn: " + currentTurn);
 
         if (!game.canMove()) {
             out.println("The game is over!");
         }
 
         out.println(RESET_TEXT_COLOR);
-
     }
 
     public void handleNotification(PrintStream out, ServerMessage message) {

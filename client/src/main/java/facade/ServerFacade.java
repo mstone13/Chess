@@ -8,7 +8,6 @@ public class ServerFacade {
     private final ClientCommunicator  communicator;
     private final Gson serializer = new GsonBuilder().serializeNulls().create();
 
-
     public ServerFacade(ClientCommunicator communicator) {
         this.communicator = communicator;
     }
