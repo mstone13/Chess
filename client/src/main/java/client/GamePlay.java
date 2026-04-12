@@ -2,9 +2,7 @@ package client;
 
 import chess.*;
 import client.websocket.WebSocketFacade;
-import facade.ServerFacade;
 import model.*;
-import ui.ChessBoard;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -69,6 +67,8 @@ public class GamePlay {
                          String playerColor, String authToken) {
         try {
             ChessGame.TeamColor teamColor = getTeamColor(playerColor);
+
+            updateGameData(gameData);
 
             if (gameData.game().isInCheckmate(teamColor) || gameData.game().isInStalemate(teamColor) ||
             gameData.game().isFinished() || gameFinished) {

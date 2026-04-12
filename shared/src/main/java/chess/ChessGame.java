@@ -309,7 +309,7 @@ public class ChessGame {
     }
 
     public void finishGame() {
-        this.isFinished = true;
+        isFinished = true;
     }
 
     public boolean canMove() {

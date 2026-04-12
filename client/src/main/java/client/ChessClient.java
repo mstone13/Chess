@@ -170,7 +170,7 @@ public class ChessClient implements ServerMessageObserver {
             } else {
                 out.println("CURRENT CHESS GAMES:");
                 for (GameData game : result.games()) {
-                    out.print(counter + ": " + game.gameName() + ". ");
+                    out.print(counter + ": " + game.gameName());
                     out.print("(White player: " + game.whiteUsername() + ", ");
                     out.println("Black player: " + game.blackUsername() + ")");
                     counter++;

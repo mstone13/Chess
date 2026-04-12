@@ -35,16 +35,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void handleConnect(WsConnectContext ctx) {
         System.out.println("Websocket connected");
         ctx.enableAutomaticPings();
-
-        try {
-            Integer gameID = Integer.parseInt(ctx.pathParam("gameID"));
-            connections.add(gameID, ctx);
-
-            System.out.println("Added connection for game " + gameID);
-
-        } catch (Exception e) {
-            System.out.println("Failed to get gameID on connect");
-        }
     }
 
     @Override
@@ -62,8 +52,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 sendError(ctx, "Error: bad request");
                 return;
             }
-
-//            connections.saveSession(gameID, ctx);
 
             switch (command.getCommandType()) {
                 case CONNECT -> connect(command.getAuthToken(), gameID, ctx);
@@ -83,8 +71,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 }
                 case LEAVE -> leave(command.getAuthToken(), gameID, ctx);
                 case RESIGN -> resign(command.getAuthToken(), gameID, ctx);
-
-
                 default -> sendError(ctx, "Error: bad request");
             }
 
