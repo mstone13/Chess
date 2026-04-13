@@ -141,12 +141,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 gameService.leaveGame(authToken, gameID);
             }
 
-//            GameData updatedGame = gameDAO.getGame(gameID);
-
-//            ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
-//            loadGame.setGame(updatedGame);
-//            connections.broadcast(gameID, ctx, loadGame);
-
             ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
             message.setMessage(username + " has left the game.");
             connections.broadcast(gameID, ctx, message);

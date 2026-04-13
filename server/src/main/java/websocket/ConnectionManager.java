@@ -41,8 +41,4 @@ public class ConnectionManager {
             }
         }
     }
-
-    public void saveSession(Integer gameID, WsContext ctx) {
-        add(gameID, ctx);
-    }
 }
