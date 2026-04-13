@@ -31,7 +31,8 @@ public class MemoryGameDAO implements GameDAO {
             whiteUsername,
             blackUsername,
             gameName,
-            game
+            game,
+                false
         );
 
         games.put(gameID, newGame);

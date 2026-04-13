@@ -88,9 +88,7 @@ public class SQLGameDAOTests {
 
     @Test
     void createGameFailure() {
-        assertThrows(DataAccessException.class, () -> {
-            gameDAO.createGame(null);
-        });
+        assertThrows(DataAccessException.class, () -> gameDAO.createGame(null));
     }
 
     @Test
@@ -126,7 +124,8 @@ public class SQLGameDAOTests {
                 "whitePlayer",
                 "blackPlayer",
                 newGame.gameName(),
-                newGame.game()
+                newGame.game(),
+                false
         );
         gameDAO.updateGame(updatedGame);
         GameData retrievedGame = gameDAO.getGame(1);
@@ -146,7 +145,8 @@ public class SQLGameDAOTests {
                 "white",
                 "black",
                 game.gameName(),
-                game.game()
+                game.game(),
+                false
         );
 
         gameDAO.updateGame(updatedGame);

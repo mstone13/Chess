@@ -1,6 +1,5 @@
 package client;
 
-import chess.ChessGame;
 import client.websocket.ServerMessageObserver;
 import client.websocket.WebSocketFacade;
 import communicator.ClientCommunicator;
@@ -22,20 +21,18 @@ public class ChessClient implements ServerMessageObserver {
     private static boolean signedIn = false;
 
     private String authToken = null;
-    private String username = null;
 
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
-    private final WebSocketFacade webSocketFacade;
+    private WebSocketFacade wsFacade = null;
     private final GamePlay gamePlay;
-    private GamePlay currentGamePlay = null;
+    private GamePlay currentGamePlay;
 
-    public ChessClient() throws Exception {
+    public ChessClient() {
         String serverUrl = "http://localhost:8080";
         ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
         this.gamePlay = new GamePlay();
-        webSocketFacade = new WebSocketFacade(serverUrl, this);
     }
 
     public void run() {
@@ -76,7 +73,6 @@ public class ChessClient implements ServerMessageObserver {
                     if (loginResult != null) {
                         authToken = loginResult.authToken;
                         signedIn = true;
-                        username = loginResult.username;
                     }
                 }
                 case "4" -> {
@@ -84,7 +80,6 @@ public class ChessClient implements ServerMessageObserver {
                     if (registerResult != null) {
                         authToken = registerResult.authToken;
                         signedIn = true;
-                        username = registerResult.username;
                     }
                 }
 
@@ -170,7 +165,7 @@ public class ChessClient implements ServerMessageObserver {
             } else {
                 out.println("CURRENT CHESS GAMES:");
                 for (GameData game : result.games()) {
-                    out.print(counter + ": " + game.gameName());
+                    out.print(counter + ": " + game.gameName() + " ");
                     out.print("(White player: " + game.whiteUsername() + ", ");
                     out.println("Black player: " + game.blackUsername() + ")");
                     counter++;
@@ -208,11 +203,11 @@ public class ChessClient implements ServerMessageObserver {
             out.print(RESET_TEXT_BOLD_FAINT);
             GameData game = orderedGames.get(gameNum);
 
-            webSocketFacade.connect(authToken, gameNum);
-
             currentGamePlay = gamePlay;
-            currentGamePlay.run(game, playerColor, true, webSocketFacade, authToken);
+            wsFacade = new WebSocketFacade("http://localhost:8080", currentGamePlay);
+            wsFacade.connect(authToken, gameNum);
 
+            currentGamePlay.run(game, playerColor, true, wsFacade, authToken);
             leaveGame(gameNum, authToken, playerColor);
 
         } catch (Exception e) {
@@ -251,12 +246,12 @@ public class ChessClient implements ServerMessageObserver {
             GameData game = orderedGames.get(gameNum);
             out.print(RESET_TEXT_BOLD_FAINT);
 
-            webSocketFacade.connect(authToken, gameNum);
-
             currentGamePlay = gamePlay;
 
-            ChessBoard.run(game, "white", null, null);
-            currentGamePlay.run(game, null, false, webSocketFacade, authToken);
+            wsFacade = new WebSocketFacade("http://localhost:8080", currentGamePlay);
+            wsFacade.connect(authToken, gameNum);
+
+            currentGamePlay.run(game, "white", false, wsFacade, authToken);
             leaveGame(gameNum, authToken, null);
 
 
@@ -268,68 +263,17 @@ public class ChessClient implements ServerMessageObserver {
         }
     }
 
-    public void leaveGame(int gameNum, String authToken, String playerColor) throws IOException {
-
-        facade.leaveGame(authToken, gameNum, playerColor);
-        webSocketFacade.leave(authToken, gameNum);
-        System.out.println("You have left the game.");
-    }
-
-    @Override
-    public void notify(ServerMessage message) {
-        PrintStream out = System.out;
-        switch (message.getServerMessageType()) {
-            case LOAD_GAME -> {
-                GameData updatedGameData = message.getGame();
-                currentGamePlay.updateGameData(updatedGameData);
-                handleLoadGame(out, message);
+    public void leaveGame(int gameNum, String authToken, String playerColor) {
+        try {
+            facade.leaveGame(authToken, gameNum, playerColor);
+            if (wsFacade != null) {
+                wsFacade.leave(authToken, gameNum);
+                wsFacade = null;
             }
-            case NOTIFICATION -> handleNotification(out, message);
-            case ERROR -> handleError(out, message);
+            System.out.println("You have left the game.");
+        } catch (Exception e) {
+            System.out.println(">> ERROR: failed to leave game: " + e.getMessage());
         }
-    }
-
-    public void handleLoadGame(PrintStream out, ServerMessage message) {
-        GameData gameData = message.getGame();
-
-        if (gameData == null) {
-            out.println("No game data received.");
-            return;
-        }
-
-        ChessGame game = gameData.game();
-        ChessGame.TeamColor currentTurn = game.getTeamTurn();
-        out.println(SET_TEXT_BOLD);
-
-        String playerColor;
-        if (username.equalsIgnoreCase(gameData.whiteUsername())) {
-            playerColor = "white";
-        } else if (username.equalsIgnoreCase(gameData.blackUsername())) {
-            playerColor = "black";
-        } else {
-            playerColor = "white";
-        }
-
-        ChessBoard.run(gameData, playerColor, null, null);
-        out.print(SET_TEXT_COLOR_BLUE + "Turn: " + currentTurn);
-
-        if (!game.canMove()) {
-            out.println("The game is over!");
-        }
-
-        out.println(RESET_TEXT_COLOR);
-    }
-
-    public void handleNotification(PrintStream out, ServerMessage message) {
-        out.println(SET_TEXT_COLOR_RED);
-        out.println(">>> " + message.getMessage());
-        out.print(RESET_TEXT_COLOR);
-    }
-
-    public void handleError(PrintStream out, ServerMessage message) {
-        out.println(SET_TEXT_COLOR_RED);
-        out.println(">> ERROR: " + message.getMessage());
-        out.print(RESET_TEXT_COLOR);
     }
 
     public HashMap<Integer, GameData> orderedGameList(List<GameData> games) {
@@ -386,6 +330,27 @@ public class ChessClient implements ServerMessageObserver {
             >> 4. Register
             """);
         }
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+        PrintStream out = System.out;
+        switch (message.getServerMessageType()) {
+            case NOTIFICATION -> handleNotification(out, message);
+            case ERROR -> handleError(out, message);
+        }
+    }
+
+    public void handleNotification(PrintStream out, ServerMessage message) {
+        out.println(SET_TEXT_COLOR_RED);
+        out.println(">>> " + message.getMessage());
+        out.print(RESET_TEXT_COLOR);
+    }
+
+    public void handleError(PrintStream out, ServerMessage message) {
+        out.println(SET_TEXT_COLOR_RED);
+        out.println(">> ERROR: " + message.getErrorMessage());
+        out.print(RESET_TEXT_COLOR);
     }
 
 }

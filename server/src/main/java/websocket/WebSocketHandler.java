@@ -23,6 +23,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private final GameDAO gameDAO;
     private final Gson gson;
     private final GameService gameService;
+    private int gameIdentifier;
 
     public WebSocketHandler(GameService gameService, AuthDAO authDAO, GameDAO gameDAO) {
         this.authDAO = authDAO;
@@ -69,7 +70,10 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                         sendError(ctx, e.getMessage());
                     }
                 }
-                case LEAVE -> leave(command.getAuthToken(), gameID, ctx);
+                case LEAVE -> {
+                    leave(command.getAuthToken(), gameID, ctx);
+                    gameIdentifier = gameID;
+                }
                 case RESIGN -> resign(command.getAuthToken(), gameID, ctx);
                 default -> sendError(ctx, "Error: bad request");
             }
@@ -87,8 +91,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void handleClose(@NotNull WsCloseContext ctx) {
         System.out.println("Websocket closed");
 
-        Integer gameID = Integer.parseInt(ctx.pathParam("gameID"));
-        connections.remove(gameID, ctx);
+        connections.remove(gameIdentifier, ctx);
     }
 
     public void connect(String authToken, int gameID, WsContext ctx) throws IOException, DataAccessException {
@@ -128,36 +131,58 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         ctx.send(gson.toJson(loadGame));
     }
 
-    private void leave(String authToken, int gameID, WsContext ctx) throws DataAccessException, IOException {
-        String username = authDAO.getAuth(authToken).username();
-        GameData game = gameDAO.getGame(gameID);
-        boolean isPlayer = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
+    private void leave(String authToken, int gameID, WsContext ctx) throws IOException {
+        try {
+            String username = authDAO.getAuth(authToken).username();
+            GameData game = gameDAO.getGame(gameID);
+            boolean isPlayer = username.equals(game.whiteUsername()) || username.equals(game.blackUsername());
 
-        if (isPlayer) {
-            gameService.leaveGame(authToken, gameID);
+            if (isPlayer) {
+                gameService.leaveGame(authToken, gameID);
+            }
+
+//            GameData updatedGame = gameDAO.getGame(gameID);
+
+//            ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
+//            loadGame.setGame(updatedGame);
+//            connections.broadcast(gameID, ctx, loadGame);
+
+            ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            message.setMessage(username + " has left the game.");
+            connections.broadcast(gameID, ctx, message);
+
+            connections.remove(gameID, ctx);
+        } catch (Exception e) {
+            sendError(ctx, e.getMessage());
         }
-
-        ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage(username + " has left the game.");
-
-        connections.broadcast(gameID, ctx, message);
-        connections.remove(gameID, ctx);
-
     }
 
-    private void resign(String authToken, int gameID, WsContext ctx) throws DataAccessException, IOException {
-        ChessGame game = gameDAO.getGame(gameID).game();
-        if (game.isFinished()) {
-            sendError(ctx, "Error: You cannot resign from a game that is finished.");
+    private void resign(String authToken, int gameID, WsContext ctx) throws IOException {
+        try {
+            ChessGame game = gameDAO.getGame(gameID).game();
+            if (game.isFinished()) {
+                sendError(ctx, "You cannot resign from a game that is finished.");
+                return;
+            }
+            String username = authDAO.getAuth(authToken).username();
+            GameData gameData = gameDAO.getGame(gameID);
+
+            boolean isPlayer = username.equals(gameData.whiteUsername()) ||
+                    username.equals(gameData.blackUsername());
+
+            if(!isPlayer) {
+                sendError(ctx, "Observers cannot resign from the game.");
+                return;
+            }
+
+            gameService.resign(authToken, gameID);
+
+            ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+            message.setMessage(username + " has resigned from the game.");
+            connections.broadcast(gameID, null, message);
+        } catch (Exception e) {
+            sendError(ctx, e.getMessage());
         }
-
-        gameService.resign(authToken, gameID);
-
-        String username = authDAO.getAuth(authToken).username();
-
-        ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-        message.setMessage(username + " has resigned from the game.");
-        connections.broadcast(gameID, null, message);
     }
 
     private void makeMove(String authToken, int gameID, ChessMove move, WsContext ctx) throws DataAccessException,

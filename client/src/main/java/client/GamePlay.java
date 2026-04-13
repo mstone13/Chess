@@ -1,8 +1,10 @@
 package client;
 
 import chess.*;
+import client.websocket.ServerMessageObserver;
 import client.websocket.WebSocketFacade;
 import model.*;
+import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -12,16 +14,65 @@ import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
 
-public class GamePlay {
+public class GamePlay implements ServerMessageObserver {
     private final Scanner scanner = new Scanner(System.in);
     private GameData currentGameData;
-    private boolean gameFinished = false;
+    public String playerColor;
 
     public GamePlay() {}
 
+    @Override
+    public void notify(ServerMessage message) {
+        PrintStream out = System.out;
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                updateGameData(message.getGame());
+                ui.ChessBoard.run(currentGameData, playerColor != null ? playerColor.toUpperCase() : "WHITE", null, null);
+                handleLoadGame(out, message);
+            }
+            case NOTIFICATION -> handleNotification(out, message);
+            case ERROR -> handleError(out, message);
+        }
+    }
+
+    public void handleLoadGame(PrintStream out, ServerMessage message) {
+        GameData gameData = message.getGame();
+
+        if (gameData == null) {
+            out.println("No game data received.");
+            return;
+        }
+
+        ChessGame game = gameData.game();
+        ChessGame.TeamColor currentTurn = game.getTeamTurn();
+        out.println(SET_TEXT_BOLD);
+
+//        ChessBoard.run(gameData, playerColor, null, null);
+        out.println(SET_TEXT_COLOR_BLUE + "Turn: " + currentTurn);
+
+        if (!game.canMove()) {
+            out.println("The game is over!");
+        }
+
+        out.print(RESET_TEXT_COLOR);
+    }
+
+    public void handleNotification(PrintStream out, ServerMessage message) {
+        out.println(SET_TEXT_COLOR_RED);
+        out.println(">>> " + message.getMessage());
+        out.print(RESET_TEXT_COLOR);
+    }
+
+    public void handleError(PrintStream out, ServerMessage message) {
+        out.println(SET_TEXT_COLOR_RED);
+        out.println(">> ERROR: " + message.getErrorMessage());
+        out.print(RESET_TEXT_COLOR);
+    }
+
     public void run(GameData game, String playerColor, boolean playing,
-                      WebSocketFacade facade, String authToken) throws InvalidMoveException, IOException {
+                      WebSocketFacade facade, String authToken) throws IOException {
         this.currentGameData = game;
+        this.playerColor = playerColor;
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         var result = "";
@@ -34,11 +85,17 @@ public class GamePlay {
     }
 
     public void directAction(PrintStream out, String result, String playerColor, boolean playing,
-                                WebSocketFacade facade, String authToken) throws InvalidMoveException, IOException {
+                                WebSocketFacade facade, String authToken) throws IOException {
         if (playing) {
             switch (result) {
                 case "1" -> printHelp(out, playing);
-                case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+                case "3" -> {
+                    if (currentGameData == null) {
+                        out.println("No game data available yet");
+                    }
+                    assert currentGameData != null;
+                    ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+                }
                 case "4" -> makeMove(out, currentGameData, facade, playerColor, authToken);
                 case "5" -> resign(out, currentGameData, facade, authToken);
                 case "6" -> highlightLegalMoves(out, currentGameData, playerColor);
@@ -70,6 +127,7 @@ public class GamePlay {
 
             updateGameData(gameData);
 
+            boolean gameFinished = false;
             if (gameData.game().isInCheckmate(teamColor) || gameData.game().isInStalemate(teamColor) ||
             gameData.game().isFinished() || gameFinished) {
                 out.println(SET_TEXT_COLOR_RED + ">> ERROR: The game is over!");
@@ -82,6 +140,12 @@ public class GamePlay {
             }
 
             ChessPosition startPos = getPosition(out, "Please enter a piece: ");
+            ChessPiece piece = gameData.game().getBoard().getPiece(startPos);
+            if (piece == null) {
+                out.println(SET_TEXT_COLOR_RED + ">> ERROR: Please enter a piece on the board. :)");
+                out.print(RESET_TEXT_COLOR);
+                return;
+            }
             ChessPosition endPos = getPosition(out, "Please enter end position: ");
             ChessPiece.PieceType promotionPiece = getPromotionPiece(out, startPos, endPos, gameData);
 
@@ -103,13 +167,14 @@ public class GamePlay {
             wsFacade.makeMove(authToken, gameData.gameID(), move);
         }
         catch (Exception e) {
-            out.println(SET_TEXT_COLOR_RED + " >> ERROR: " );
+            out.println(SET_TEXT_COLOR_RED + " >> ERROR: " + e.getMessage());
+            out.print(RESET_TEXT_COLOR);
         }
     }
 
 
     public ChessGame.TeamColor getTeamColor(String playerColor) {
-        ChessGame.TeamColor teamColor = null;
+        ChessGame.TeamColor teamColor;
         if (playerColor.equalsIgnoreCase("white")) {
             teamColor = ChessGame.TeamColor.WHITE;
         } else {
@@ -124,19 +189,19 @@ public class GamePlay {
         out.println(prompt);
 
         while (true) {
-            out.println("Enter the row [1-8]: ");
+            out.println(SET_TEXT_BOLD + "Enter the row [1-8]: ");
             try {
                 row = Integer.parseInt(scanner.nextLine());
             } catch (NumberFormatException e) {
-                out.println("Please input a valid integer for row");
+                out.println(RESET_TEXT_BOLD_FAINT + "Please input a valid integer for row");
                 continue;
             }
 
-            out.println("Enter the column [a-h]: ");
+            out.println(SET_TEXT_BOLD + "Enter the column [a-h]: ");
             String inputLine = scanner.nextLine().toLowerCase();
 
             if (inputLine.length() != 1) {
-                out.println("Please input a single character for column [a-h].");
+                out.println(RESET_TEXT_BOLD_FAINT + "Please input a single character for column [a-h].");
                 continue;
             }
 
@@ -144,7 +209,7 @@ public class GamePlay {
             col = input - 'a' + 1;
 
             if (row < 1 || row > 8 || col < 1 || col > 8) {
-                out.println("Please input a valid row [1-8] and col [a-h].");
+                out.println(RESET_TEXT_BOLD_FAINT + "Please input a valid row [1-8] and col [a-h].");
                 continue;
             }
 
@@ -189,17 +254,31 @@ public class GamePlay {
     }
 
     public void resign(PrintStream out, GameData gameData, WebSocketFacade wsFacade, String authToken) throws IOException {
-        if (gameFinished) {
-            out.println(SET_TEXT_COLOR_RED + ">> ERROR: The game is already finished, you can't resign now!");
-            out.print(RESET_TEXT_COLOR);
+        if (currentGameData.isFinished()) {
+            out.println(SET_TEXT_COLOR_RED + ">> ERROR: You cannot resign from a game that is finished!");
+            return;
+        }
+
+        out.println(SET_TEXT_BOLD + "Are you sure you want to resign? [Y/N]");
+        var answer = scanner.nextLine();
+        out.print(RESET_TEXT_BOLD_FAINT);
+
+        if (answer.equalsIgnoreCase("N")) {
+            out.println("Keep going! You got this!");
             return;
         }
 
         ChessGame game = gameData.game();
         game.finishGame();
-        updateGameData(gameData);
+        gameData = new GameData(
+                gameData.gameID(),
+                gameData.whiteUsername(),
+                gameData.blackUsername(),
+                gameData.gameName(),
+                game,
+                true
+        );
 
-        gameFinished = true;
         wsFacade.resign(authToken, gameData.gameID());
     }
 
@@ -250,4 +329,6 @@ public class GamePlay {
                     """);
         }
     }
+
+
 }

@@ -11,13 +11,11 @@ import java.util.List;
 public class GameService {
    private final AuthDAO authDAO;
    private final GameDAO gameDAO;
-   private final UserDAO userDAO;
 
-   public GameService(AuthDAO authDAO, GameDAO gameDAO, UserDAO userDAO) {
+    public GameService(AuthDAO authDAO, GameDAO gameDAO, UserDAO userDAO) {
        this.authDAO = authDAO;
        this.gameDAO = gameDAO;
-       this.userDAO = userDAO;
-   }
+    }
 
    public ListGamesResult listGames(String authToken) throws DataAccessException {
         if (authToken == null || authToken.isBlank()) {
@@ -71,7 +69,8 @@ public class GameService {
                    username,
                    gameData.blackUsername(),
                    gameData.gameName(),
-                   gameData.game()
+                   gameData.game(),
+                   false
            );
        } else if (request.playerColor.equals("BLACK")){
            if (gameData.blackUsername() != null) {
@@ -82,7 +81,8 @@ public class GameService {
                        gameData.whiteUsername(),
                        username,
                        gameData.gameName(),
-                       gameData.game()
+                       gameData.game(),
+                       false
                );
 
            } else {
@@ -114,7 +114,8 @@ public class GameService {
                     null,
                     gameData.blackUsername(),
                     gameData.gameName(),
-                    gameData.game()
+                    gameData.game(),
+                    false
             );
         } else if (username.equals(gameData.blackUsername())) {
             updatedGame = new GameData(
@@ -122,7 +123,8 @@ public class GameService {
                     gameData.whiteUsername(),
                     null,
                     gameData.gameName(),
-                    gameData.game()
+                    gameData.game(),
+                    false
             );
         } else {
             throw new RuntimeException("Bad Request");
@@ -132,35 +134,29 @@ public class GameService {
     }
 
     public void resign(String authToken, int gameID) throws DataAccessException {
-        if (authToken == null || authToken.isBlank()) {
-            throw new RuntimeException("Bad Request");
-        }
+       if (authToken == null || authToken.isBlank()) {
+           throw new RuntimeException("Bad Request");
+       }
 
-        checkAuthData(authToken);
-        AuthData authData = authDAO.getAuth(authToken);
-        String username = authData.username();
+       checkAuthData(authToken);
+       GameData gameData = gameDAO.getGame(gameID);
+       if (gameData == null) {
+           throw new RuntimeException("Bad Request");
+       }
 
-        GameData gameData = gameDAO.getGame(gameID);
-        if (gameData == null){
-            throw new RuntimeException("Bad Request: game does not exist");
-        }
+       GameData updatedGame;
 
-        if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
-            throw new RuntimeException("Bad Request: user not in game");
-        }
+       updatedGame = new GameData(
+               gameData.gameID(),
+               gameData.whiteUsername(),
+               gameData.blackUsername(),
+               gameData.gameName(),
+               gameData.game(),
+               true
+       );
 
-        ChessGame game = gameData.game();
-        game.finishGame();
-
-        GameData updatedGame = new GameData(
-                gameData.gameID(),
-                gameData.whiteUsername(),
-                gameData.blackUsername(),
-                gameData.gameName(),
-                game
-        );
-
-        gameDAO.updateGame(updatedGame);
+       gameData.game().finishGame();
+       gameDAO.updateGame(updatedGame);
     }
 
     public void makeMove(String authToken, int gameID, ChessMove move)
@@ -192,7 +188,8 @@ public class GameService {
                 gameData.whiteUsername(),
                 gameData.blackUsername(),
                 gameData.gameName(),
-                game
+                game,
+                false
         ));
     }
 

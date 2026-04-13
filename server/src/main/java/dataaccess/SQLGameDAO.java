@@ -31,7 +31,8 @@ public class SQLGameDAO implements GameDAO {
                                 rs.getString("whiteUsername"),
                                 rs.getString("blackUsername"),
                                 rs.getString("gameName"),
-                                game
+                                game,
+                                false
                         );
                     }
                 }
@@ -100,7 +101,8 @@ public class SQLGameDAO implements GameDAO {
                         rs.getString("whiteUsername"),
                         rs.getString("blackUsername"),
                             rs.getString("gameName"),
-                            game
+                            game,
+                            false
                     );
 
                     games.add(gameData);
