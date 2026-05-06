@@ -17,19 +17,19 @@ public class ChessBoard {
     private static chess.ChessBoard board;
 
     public static void run(GameData game, String playerColor,
-                           Collection<ChessMove> legalMoves, ChessPosition chosenPos) {
+                           Collection<ChessMove> legalMoves, ChessPosition chosenPos, String boardColor) {
         board = game.game().getBoard();
 
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
-        drawChessBoard(out, game, playerColor, legalMoves, chosenPos);
+        drawChessBoard(out, game, playerColor, legalMoves, chosenPos, boardColor);
         out.print(RESET_BG_COLOR);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 
     private static void drawChessBoard(PrintStream out, GameData game,
                                        String playerColor, Collection<ChessMove> legalMoves,
-                                       ChessPosition chosenPos) {
+                                       ChessPosition chosenPos, String boardColor) {
         out.println(SET_TEXT_BOLD + SET_TEXT_UNDERLINE);
         out.println("GAME: " + game.gameName());
         out.print(RESET_TEXT_UNDERLINE);
@@ -39,7 +39,7 @@ public class ChessBoard {
 
         drawHeaders(out, playerColor);
 
-        printPieces(out, playerColor, legalMoves, chosenPos);
+        printPieces(out, playerColor, legalMoves, chosenPos, boardColor);
 
         drawHeaders(out, playerColor);
         if (legalMoves != null && legalMoves.isEmpty()) {
@@ -51,7 +51,7 @@ public class ChessBoard {
     }
 
     private static void printPieces(PrintStream out, String playerColor,
-                                    Collection<ChessMove> legalMoves, ChessPosition chosenPos) {
+                                    Collection<ChessMove> legalMoves, ChessPosition chosenPos, String boardColor) {
         boolean isBlack = playerColor.equalsIgnoreCase("black");
 
         for (int row = isBlack ? 1 : 8;
@@ -69,9 +69,9 @@ public class ChessBoard {
                 ChessPiece piece = board.getPiece(pos);
 
                 if (legalMoves != null) {
-                    drawLegalMoveSquare(out, piece, row, col, chosenPos, legalMoves);
+                    drawLegalMoveSquare(out, piece, row, col, chosenPos, legalMoves, boardColor);
                 } else {
-                    drawSquare(out, piece, row, col);
+                    drawSquare(out, piece, row, col, boardColor);
                 }
             }
 
@@ -81,26 +81,26 @@ public class ChessBoard {
         }
     }
 
-    private static void drawSquare(PrintStream out, ChessPiece piece, int row, int col) {
+    private static void drawSquare(PrintStream out, ChessPiece piece, int row, int col, String boardColor) {
         boolean isLight = (row + col) % 2 == 1;
         if (isLight) {
             out.print(SET_BG_COLOR_WHITE);
         } else {
-            out.print(SET_BG_COLOR_PINK);
+            out.print(boardColor);
         }
 
         determineAndPrintPiece(out, piece);
     }
 
     private static void drawLegalMoveSquare(PrintStream out, ChessPiece piece, int row, int col,
-                                            ChessPosition chosenPos, Collection<ChessMove> legalMoves) {
+                                            ChessPosition chosenPos, Collection<ChessMove> legalMoves, String boardColor) {
         if (chosenPos.getRow() == row && chosenPos.getColumn() == col) {
             out.print(SET_BG_COLOR_YELLOW);
         }
         else if (moveInLegalMoves(row, col, legalMoves)) {
             blackOrWhite(out, row, col);
         } else {
-            drawSquare(out, piece, row, col);
+            drawSquare(out, piece, row, col, boardColor);
             return;
         }
 
@@ -185,7 +185,7 @@ public class ChessBoard {
     }
 
     private static void setLightBlue(PrintStream out) {
-        out.print(SET_BG_COLOR_LIGHT_BLUE);
+        out.print(SET_BG_COLOR_LIGHT_GREY);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 

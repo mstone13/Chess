@@ -2,6 +2,7 @@ package websocket;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPiece;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataaccess.*;
@@ -187,6 +188,8 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             gameService.makeMove(authToken, gameID, move);
 
             GameData updatedGame = gameDAO.getGame(gameID);
+            String pieceType = specifyPieceType(move, updatedGame);
+
             // send load_game to EVERYONE
             ServerMessage loadGame = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
             loadGame.setGame(updatedGame);
@@ -194,7 +197,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
             //send move notification to other players ONLY
             ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
-            message.setMessage(username + " moved from " + move.getStartPosition() + " to " + move.getEndPosition() +
+            message.setMessage(username + " moved the " + pieceType + " from " + move.getStartPosition() + " to " + move.getEndPosition() +
                     (move.getPromotionPiece() != null ? ", promoting to " + move.getPromotionPiece() : ""));
             connections.broadcast(gameID, ctx, message);
 
@@ -223,6 +226,24 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         } catch (InvalidMoveException e) {
             sendError(ctx, e.getMessage());
         }
+
+    }
+
+    private String specifyPieceType(ChessMove move, GameData game) {
+        ChessPiece piece = game.game().getBoard().getPiece(move.getEndPosition());
+        ChessPiece.PieceType type = piece.getPieceType();
+
+        String pieceType = null;
+        switch (type) {
+            case QUEEN -> pieceType = "queen";
+            case KING -> pieceType = "king";
+            case ROOK -> pieceType = "rook";
+            case BISHOP -> pieceType = "bishop";
+            case KNIGHT -> pieceType = "knight";
+            case PAWN -> pieceType = "pawn";
+        }
+
+        return pieceType;
 
     }
 

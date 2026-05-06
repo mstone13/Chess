@@ -6,6 +6,7 @@ import client.websocket.WebSocketFacade;
 import model.*;
 import websocket.messages.ServerMessage;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -18,8 +19,11 @@ public class GamePlay implements ServerMessageObserver {
     private final Scanner scanner = new Scanner(System.in);
     private GameData currentGameData;
     public String playerColor;
+    public String boardColor;
 
-    public GamePlay() {}
+    public GamePlay() {
+        boardColor = SET_BG_COLOR_PINK;
+    }
 
     @Override
     public void notify(ServerMessage message) {
@@ -27,7 +31,7 @@ public class GamePlay implements ServerMessageObserver {
         switch (message.getServerMessageType()) {
             case LOAD_GAME -> {
                 updateGameData(message.getGame());
-                ui.ChessBoard.run(currentGameData, playerColor != null ? playerColor.toUpperCase() : "WHITE", null, null);
+                ui.ChessBoard.run(currentGameData, playerColor != null ? playerColor.toUpperCase() : "WHITE", null, null, boardColor);
                 handleLoadGame(out, message);
             }
             case NOTIFICATION -> handleNotification(out, message);
@@ -47,7 +51,6 @@ public class GamePlay implements ServerMessageObserver {
         ChessGame.TeamColor currentTurn = game.getTeamTurn();
         out.println(SET_TEXT_BOLD);
 
-//        ChessBoard.run(gameData, playerColor, null, null);
         out.println(SET_TEXT_COLOR_BLUE + "Turn: " + currentTurn);
 
         if (!game.canMove()) {
@@ -94,30 +97,35 @@ public class GamePlay implements ServerMessageObserver {
                         out.println("No game data available yet");
                     }
                     assert currentGameData != null;
-                    ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+                    ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null, boardColor);
                 }
                 case "4" -> makeMove(out, currentGameData, facade, playerColor, authToken);
                 case "5" -> resign(out, currentGameData, facade, authToken);
                 case "6" -> highlightLegalMoves(out, currentGameData, playerColor);
+                case "7" -> {
+                    changeBoardColor(out);
+                    ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null, boardColor);
+                }
+
             }
         } else {
             switch (result) {
                 case "1" -> printHelp(out, playing);
-                case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null);
+                case "3" -> ui.ChessBoard.run(currentGameData, playerColor.toUpperCase(), null, null, boardColor);
                 case "4" -> highlightLegalMoves(out, currentGameData, playerColor);
             }
         }
     }
 
     public void highlightLegalMoves(PrintStream out, GameData game, String playerColor) {
-        ChessPosition pos = getPosition(out, "Please enter a piece: ");
+        ChessPosition pos = getPosition(out, "Please enter a piece:");
         Collection<ChessMove> legalMoves = game.game().validMoves(pos);
 
         if (playerColor == null) {
             playerColor = "white";
         }
 
-        ui.ChessBoard.run(game, playerColor, legalMoves, pos);
+        ui.ChessBoard.run(game, playerColor, legalMoves, pos, boardColor);
     }
 
     public void makeMove(PrintStream out, GameData gameData, WebSocketFacade wsFacade,
@@ -127,9 +135,8 @@ public class GamePlay implements ServerMessageObserver {
 
             updateGameData(gameData);
 
-            boolean gameFinished = false;
             if (gameData.game().isInCheckmate(teamColor) || gameData.game().isInStalemate(teamColor) ||
-            gameData.game().isFinished() || gameFinished) {
+            gameData.game().isFinished()) {
                 out.println(SET_TEXT_COLOR_RED + ">> ERROR: The game is over!");
                 out.print(RESET_TEXT_COLOR);
                 return;
@@ -139,14 +146,14 @@ public class GamePlay implements ServerMessageObserver {
                 return;
             }
 
-            ChessPosition startPos = getPosition(out, "Please enter a piece: ");
+            ChessPosition startPos = getPosition(out, "Please enter a piece:");
             ChessPiece piece = gameData.game().getBoard().getPiece(startPos);
             if (piece == null) {
-                out.println(SET_TEXT_COLOR_RED + ">> ERROR: Please enter a piece on the board. :)");
+                out.println(SET_TEXT_COLOR_RED + ">> ERROR: Please enter a piece on the board.)");
                 out.print(RESET_TEXT_COLOR);
                 return;
             }
-            ChessPosition endPos = getPosition(out, "Please enter end position: ");
+            ChessPosition endPos = getPosition(out, "Please enter end position:");
             ChessPiece.PieceType promotionPiece = getPromotionPiece(out, startPos, endPos, gameData);
 
             ChessMove move = new ChessMove(startPos, endPos, promotionPiece);
@@ -186,10 +193,11 @@ public class GamePlay implements ServerMessageObserver {
     private ChessPosition getPosition(PrintStream out, String prompt) {
         int row, col;
 
-        out.println(prompt);
+        out.println(SET_TEXT_ITALIC + SET_TEXT_UNDERLINE +  prompt);
+        out.print(RESET_TEXT_ITALIC + RESET_TEXT_UNDERLINE);
 
         while (true) {
-            out.println(SET_TEXT_BOLD + "Enter the row [1-8]: ");
+            out.print(SET_TEXT_BOLD + "Enter the row [1-8]: ");
             try {
                 row = Integer.parseInt(scanner.nextLine());
             } catch (NumberFormatException e) {
@@ -197,7 +205,7 @@ public class GamePlay implements ServerMessageObserver {
                 continue;
             }
 
-            out.println(SET_TEXT_BOLD + "Enter the column [a-h]: ");
+            out.print(SET_TEXT_BOLD + "Enter the column [a-h]: ");
             String inputLine = scanner.nextLine().toLowerCase();
 
             if (inputLine.length() != 1) {
@@ -237,7 +245,7 @@ public class GamePlay implements ServerMessageObserver {
                     >> B = Bishop
                     >> N = Knight
                     """);
-                    out.print("Enter what promotion piece you want: ");
+                    out.print("Enter the piece to which you'd like to promote your pawn: ");
                     String choice = scanner.nextLine().toUpperCase();
 
                     switch (choice) {
@@ -282,6 +290,44 @@ public class GamePlay implements ServerMessageObserver {
         wsFacade.resign(authToken, gameData.gameID());
     }
 
+    public void changeBoardColor(PrintStream out) {
+        out.println("""
+                Pick a color:
+                >> PINK
+                >> RED
+                >> ORANGE
+                >> YELLOW
+                >> GREEN
+                >> BLUE
+                >> PURPLE
+                """);
+
+        out.print("Color: ");
+        String choice = scanner.nextLine().toLowerCase();
+        if (!choice.equals("pink") && !choice.equals("red") && !choice.equals("orange") && !choice.equals("yellow")
+        && !choice.equals("green") && !choice.equals("blue") && !choice.equals("purple")) {
+            out.println("Please choose a color from the list!");
+        }
+
+        switch (choice) {
+            case "pink" ->
+                    {
+                        if (boardColor.equals(SET_BG_COLOR_PINK)) {
+                            return;
+                        } else { boardColor = SET_BG_COLOR_PINK; }
+                    }
+            case "red" -> boardColor = SET_BG_COLOR_RED;
+//            case "orange" -> //make a orange bg color
+            case "yellow" -> boardColor = SET_BG_COLOR_YELLOW;
+//            case "green" -> //make a light green that doesn't clash
+            case "blue" -> boardColor = SET_BG_COLOR_DARK_BLUE;
+            case "purple" -> boardColor = SET_BG_COLOR_MAGENTA;
+            default -> boardColor = SET_BG_COLOR_PINK;
+         }
+
+        out.println("Awesome! Here is your new board: ");
+    }
+
     public void updateGameData(GameData updatedGame) {
         this.currentGameData = updatedGame;
     }
@@ -296,6 +342,7 @@ public class GamePlay implements ServerMessageObserver {
                 >> Make move: Input a move to make provided it is your turn.
                 >> Resign: Admit defeat and forfeit the game.
                 >> Highlight legal moves: Legal moves for a selected piece are highlighted on the board.
+                >> Choose a different color for the board.
                 """);
         } else {
             out.print("""
@@ -319,6 +366,7 @@ public class GamePlay implements ServerMessageObserver {
                     >> 4. Make move
                     >> 5. Resign
                     >> 6. Highlight legal moves
+                    >> 7. Change board color
                     """);
         } else {
             out.print("""

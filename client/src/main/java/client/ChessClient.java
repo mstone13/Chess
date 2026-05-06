@@ -130,16 +130,16 @@ public class ChessClient implements ServerMessageObserver {
     }
 
     public void logout(PrintStream out) {
-       try {
-           facade.logout(authToken);
-           this.authToken = null;
-           signedIn = false;
-           out.print(SET_TEXT_BOLD);
-           out.println("Logged out successfully.");
-           out.print(RESET_TEXT_BOLD_FAINT);
-       } catch (Exception e) {
-           throw new RuntimeException("Failed to log out: " + e.getMessage());
-       }
+        try {
+            facade.logout(authToken);
+            this.authToken = null;
+            signedIn = false;
+            out.print(SET_TEXT_BOLD);
+            out.println("Logged out successfully.");
+            out.print(RESET_TEXT_BOLD_FAINT);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to log out: " + e.getMessage());
+        }
     }
 
     public void createGame(PrintStream out) {
