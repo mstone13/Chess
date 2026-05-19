@@ -6,7 +6,6 @@ import client.websocket.WebSocketFacade;
 import model.*;
 import websocket.messages.ServerMessage;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -15,13 +14,13 @@ import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
 
-public class GamePlay implements ServerMessageObserver {
+public class ChessGamePlay implements ServerMessageObserver {
     private final Scanner scanner = new Scanner(System.in);
     private GameData currentGameData;
     public String playerColor;
     public String boardColor;
 
-    public GamePlay() {
+    public ChessGamePlay() {
         boardColor = SET_BG_COLOR_PINK;
     }
 
@@ -317,7 +316,7 @@ public class GamePlay implements ServerMessageObserver {
                         } else { boardColor = SET_BG_COLOR_PINK; }
                     }
             case "red" -> boardColor = SET_BG_COLOR_RED;
-//            case "orange" -> //make a orange bg color
+//            case "orange" -> //make an orange bg color
             case "yellow" -> boardColor = SET_BG_COLOR_YELLOW;
 //            case "green" -> //make a light green that doesn't clash
             case "blue" -> boardColor = SET_BG_COLOR_DARK_BLUE;

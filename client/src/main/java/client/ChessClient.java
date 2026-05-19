@@ -5,7 +5,6 @@ import client.websocket.WebSocketFacade;
 import communicator.ClientCommunicator;
 import facade.ServerFacade;
 import model.*;
-import ui.*;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -25,21 +24,23 @@ public class ChessClient implements ServerMessageObserver {
     private final Scanner scanner = new Scanner(System.in);
     private final ServerFacade facade;
     private WebSocketFacade wsFacade = null;
-    private final GamePlay gamePlay;
-    private GamePlay currentGamePlay;
+    private final ChessGamePlay gamePlay;
+    private ChessGamePlay currentGamePlay;
 
     public ChessClient() {
+
+        //get rid of most of this? don't start a new facade/communicator
         String serverUrl = "http://localhost:8080";
         ClientCommunicator communicator = new ClientCommunicator(serverUrl);
         this.facade = new ServerFacade(communicator);
-        this.gamePlay = new GamePlay();
+        this.gamePlay = new ChessGamePlay();
     }
 
     public void run() {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
 
         out.print(SET_TEXT_BOLD);
-        out.println("Welcome to the 240 Chess Menu!");
+        out.println("Let's play some CHESS!");
         out.print(RESET_TEXT_BOLD_FAINT);
         var result = "";
 
@@ -53,94 +54,93 @@ public class ChessClient implements ServerMessageObserver {
     }
 
     public void directAction(PrintStream out, String result) {
-        UserResult loginResult;
-        UserResult registerResult;
-
-        if (signedIn) {
+//        UserResult loginResult;
+//        UserResult registerResult;
             switch (result) {
                 case "1" -> printHelp(out);
-                case "3" -> logout(out);
+                case "3" -> result = "2";
                 case "4" -> createGame(out);
                 case "5" -> listGames(out);
                 case "6" -> joinGame(out);
                 case "7" -> observeGame(out);
             }
-        } else {
-            switch (result) {
-                case "1" -> printHelp(out);
-                case "3" -> {
-                    loginResult = login(out);
-                    if (loginResult != null) {
-                        authToken = loginResult.authToken;
-                        signedIn = true;
-                    }
-                }
-                case "4" -> {
-                    registerResult = register(out);
-                    if (registerResult != null) {
-                        authToken = registerResult.authToken;
-                        signedIn = true;
-                    }
-                }
+//        } else {
+//            switch (result) {
+//                case "1" -> printHelp(out);
+//                case "3" -> {
+//                    loginResult = login(out);
+//                    if (loginResult != null) {
+//                        authToken = loginResult.authToken;
+//                        signedIn = true;
+//                    }
+//                }
+//                case "4" -> {
+//                    registerResult = register(out);
+//                    if (registerResult != null) {
+//                        authToken = registerResult.authToken;
+//                        signedIn = true;
+//                    }
+//                }
+//
+//            }
 
-            }
-        }
     }
 
-    public UserResult login(PrintStream out) {
-        try {
-            out.print(SET_TEXT_BOLD);
-            out.println("Input username: ");
-            String username = scanner.nextLine();
-
-            out.println("Input password: ");
-            String password = scanner.nextLine();
-
-            UserResult result = facade.login(username, password);
-            out.println("Welcome " + result.username + "!!");
-            out.print(RESET_TEXT_BOLD_FAINT);
-            return result;
-        } catch (Exception e) {
-            out.println("Login failed: " + e.getMessage());
-        }
-        return null;
-    }
-
-    public UserResult register(PrintStream out) {
-        try {
-            out.print(SET_TEXT_BOLD);
-            out.println("Input username: ");
-            String username = scanner.nextLine();
-
-            out.println("Input password: ");
-            String password = scanner.nextLine();
-
-            out.println("Input email: ");
-            String email = scanner.nextLine();
-
-            UserResult result = facade.register(username, password, email);
-            out.print(SET_TEXT_BOLD);
-            out.println("Hello there, " + result.username);
-            out.print(RESET_TEXT_BOLD_FAINT);
-            return result;
-        } catch (Exception e){
-            out.println("Registration failed: " + e.getMessage());
-        }
-        return null;
-    }
-
-    public void logout(PrintStream out) {
-        try {
-            facade.logout(authToken);
-            this.authToken = null;
-            signedIn = false;
-            out.print(SET_TEXT_BOLD);
-            out.println("Logged out successfully.");
-            out.print(RESET_TEXT_BOLD_FAINT);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to log out: " + e.getMessage());
-        }
-    }
+    //don't need; found in gameMenu
+//    public UserResult login(PrintStream out) {
+//        try {
+//            out.print(SET_TEXT_BOLD);
+//            out.println("Input username: ");
+//            String username = scanner.nextLine();
+//
+//            out.println("Input password: ");
+//            String password = scanner.nextLine();
+//
+//            UserResult result = facade.login(username, password);
+//            out.println("Welcome " + result.username + "!!");
+//            out.print(RESET_TEXT_BOLD_FAINT);
+//            return result;
+//        } catch (Exception e) {
+//            out.println("Login failed: " + e.getMessage());
+//        }
+//        return null;
+//    }
+//
+//    public UserResult register(PrintStream out) {
+//        try {
+//            out.print(SET_TEXT_BOLD);
+//            out.println("Input username: ");
+//            String username = scanner.nextLine();
+//
+//            out.println("Input password: ");
+//            String password = scanner.nextLine();
+//
+//            out.println("Input email: ");
+//            String email = scanner.nextLine();
+//
+//            UserResult result = facade.register(username, password, email);
+//            out.print(SET_TEXT_BOLD);
+//            out.println("Hello there, " + result.username);
+//            out.print(RESET_TEXT_BOLD_FAINT);
+//            return result;
+//        } catch (Exception e){
+//            out.println("Registration failed: " + e.getMessage());
+//        }
+//        return null;
+//    }
+//
+//    public void logout(PrintStream out) {
+//        try {
+//            facade.logout(authToken);
+//            this.authToken = null;
+//            signedIn = false;
+//            out.print(SET_TEXT_BOLD);
+//            out.println("Logged out successfully.");
+//            out.print(RESET_TEXT_BOLD_FAINT);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to log out: " + e.getMessage());
+//        }
+//    }
 
     public void createGame(PrintStream out) {
         try {
@@ -300,12 +300,6 @@ public class ChessClient implements ServerMessageObserver {
                     (see list of games to find appropriate game number).
                     Observe Game: Observe an existing game. Input a game number.
                     """);
-        } else {
-            out.print("""
-                    Quit: Exit the program.
-                    Login: Sign into your existing user. Input your username and password.
-                    Register: Create a new user. Input a username, password, and email.
-                    """);
         }
         out.print(RESET_TEXT_BOLD_FAINT);
     }
@@ -321,13 +315,6 @@ public class ChessClient implements ServerMessageObserver {
             >> 5. List Games
             >> 6. Play Game
             >> 7. Observe Game
-            """);
-        } else {
-            out.print( """
-            >> 1. Help
-            >> 2. Quit
-            >> 3. Login
-            >> 4. Register
             """);
         }
     }
